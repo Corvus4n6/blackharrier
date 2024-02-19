@@ -21,6 +21,8 @@ Note: There is **no** software write-block installed. You can modify or destroy 
 Start with a base installation of Linux Mint, 64-bit with Mate-Desktop, (confirmed to work with release 21.3, aka Virginia), and apply all updates. After rebooting, download the install.sh file. Open a terminal window, navigate to the location you downloaded the install.sh file, and type:
 
 ```yaml
+git clone https://github.com/Corvus4n6/blackharrier.git
+cd blackharrier
 sudo bash install.sh
 ```
 
