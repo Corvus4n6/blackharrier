@@ -1,0 +1,32 @@
+wireshark-common	wireshark-common/install-setuid	boolean	true
+mdadm	mdadm/mail_to	string	root
+# Disable monthly automatic check of MD arrays
+mdadm	mdadm/autocheck	boolean	false
+mdadm	mdadm/start_daemon	boolean	true
+mdadm	mdadm/initrdstart	string	all
+mdadm	mdadm/initrdstart_notinconf	boolean	false
+# Disable daily check of degraded MD arrays
+mdadm	mdadm/autoscan	boolean	false
+postfix	postfix/sqlite_warning	boolean
+postfix	postfix/tlsmgr_upgrade_warning	boolean
+postfix	postfix/protocols	select
+postfix	postfix/relay_restrictions_warning	boolean
+postfix	postfix/destinations	string
+postfix	postfix/kernel_version_warning	boolean
+postfix	postfix/mailname	string	/etc/mailname
+postfix	postfix/relayhost	string
+postfix	postfix/newaliases	boolean	false
+postfix	postfix/chattr	boolean	false
+postfix	postfix/main_cf_conversion_warning	boolean	true
+postfix	postfix/rfc1035_violation	boolean	false
+postfix	postfix/mynetworks	string	127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
+postfix	postfix/root_address	string
+postfix	postfix/retry_upgrade_warning	boolean
+postfix	postfix/mailbox_limit	string	0
+postfix	postfix/main_mailer_type	select	No configuration
+postfix	postfix/procmail	boolean
+postfix	postfix/recipient_delim	string	+
+postfix	postfix/lmtp_retired_warning	boolean	true
+postfix	postfix/dynamicmaps_conversion_warning	boolean
+postfix	postfix/mydomain_warning	boolean
+postfix	postfix/compat_conversion_warning	boolean	true
