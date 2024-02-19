@@ -1,0 +1,11 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Type=Application
+Exec=/usr/local/bin/bhpwdchk
+Hidden=false
+X-MATE-Autostart-enabled=true
+Name[en_US]=Password Check
+Name=Password Check
+Comment[en_US]=Check if passwords are set and notify
+Comment=Check if passwords are set and notify
+

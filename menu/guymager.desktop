@@ -1,0 +1,13 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Categories=;
+Comment=Fast forensic imager
+Exec=sudo guymager
+GenericName=Imager
+Hidden=false
+Icon=guymager_128.png
+Name=Guymager
+Terminal=false
+TryExec=guymager
+Type=Application
+Version=1.0

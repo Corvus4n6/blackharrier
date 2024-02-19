@@ -1,0 +1,13 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Categories=;
+Comment=M$ registry hive editor
+Encoding=UTF-8
+Exec=fred
+Hidden=false
+Icon=fred
+Name=Fred
+StartupNotify=true
+Terminal=false
+Type=Application
+Version=1.0

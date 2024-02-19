@@ -1,0 +1,12 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Categories=;
+Comment=Compute message digests and checksums
+Comment[de]=Berechnen von Prüfsummen
+Exec=gtkhash
+Hidden=false
+Icon=gtkhash
+Name=GtkHash
+StartupNotify=true
+Terminal=false
+Type=Application

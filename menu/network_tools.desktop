@@ -1,0 +1,15 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Categories=System;Settings;GNOME;GTK;
+Comment=View information about your network
+Exec=gnome-nettool
+Hidden=true
+Icon=gnome-nettool
+Name=Network Tools
+StartupNotify=true
+Terminal=false
+Type=Application
+X-GNOME-Bugzilla-Bugzilla=GNOME
+X-GNOME-Bugzilla-Component=general
+X-GNOME-Bugzilla-Product=gnome-nettool
+X-GNOME-Bugzilla-Version=3.2.0

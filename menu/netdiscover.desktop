@@ -1,0 +1,10 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Icon=/usr/share/icons/gnome/48x48/categories/package_network.png
+Name=Netdiscover
+Exec=mate-terminal bash -c "sudo netdiscover;bash"
+Comment=Discover wireless networks
+

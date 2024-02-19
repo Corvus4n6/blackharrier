@@ -1,0 +1,16 @@
+#!/usr/bin/env xdg-open
+[Desktop Entry]
+Categories=;
+Comment=Network traffic analyzer
+Encoding=UTF-8
+Exec=sudo wireshark %f
+GenericName=Network Analyzer
+Hidden=false
+Icon=wireshark
+MimeType=application/vnd.tcpdump.pcap;
+Name=Wireshark (as root)
+Terminal=false
+TryExec=wireshark
+Type=Application
+Version=1.0
+
