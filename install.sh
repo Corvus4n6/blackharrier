@@ -279,6 +279,9 @@ cd ..
 rm -rf xrdp*
 #rm -rf ltmain.sh
 ln -s /usr/local/sbin/xrdp{,-sesman} /usr/sbin
+# Note: for headless server installations or multi-desktop installations,you can set the default desktop instance for a login with:
+# sudo update-alternatives --config x-session-manager
+# This is a fix for issues where XRDP is trying to launch Gnome on a system without a Gnome desktop and it fails after remote login.
 
 # setup ewf-tools with the latest version - much faster than old repo package
 apt install -y git autoconf automake autopoint libtool pkg-config flex bison libbz2-dev python3-dev
