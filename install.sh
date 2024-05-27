@@ -109,7 +109,7 @@ wget --spider -nv https://github.com/simsong/bulk_extractor.git
 wget --spider -nv https://deb.pinguin.lu/deb.pinguin.lu.list
 wget --spider -nv https://deb.pinguin.lu/deb-pinguin-lu.gpg
 wget --spider -nv http://www.webmin.com/download/deb/webmin-current.deb
-wget --spider -nv https://github.com/neutrinolabs/xrdp/releases/download/v0.9.24/xrdp-0.9.24.tar.gz
+wget --spider -nv https://github.com/neutrinolabs/xrdp/releases/download/v0.10.0/xrdp-0.10.0.tar.gz
 wget --spider -nv https://downloads.volatilityfoundation.org/volatility3/symbols/windows.zip
 wget --spider -nv https://downloads.volatilityfoundation.org/volatility3/symbols/mac.zip
 wget --spider -nv https://downloads.volatilityfoundation.org/volatility3/symbols/linux.zip
@@ -263,10 +263,10 @@ libpam0g-dev libjpeg-dev libx11-dev libxfixes-dev libxrandr-dev flex bison \
 libxml2-dev intltool xsltproc xutils-dev python3-libxml2 xutils libfuse-dev \
 libmp3lame-dev nasm libpixman-1-dev xserver-xorg-dev
 
-wget -O /tmp/xrdp-0.9.24.tar.gz https://github.com/neutrinolabs/xrdp/releases/download/v0.9.24/xrdp-0.9.24.tar.gz
-tar zxvf /tmp/xrdp-0.9.24.tar.gz
-rm -f /tmp/xrdp-0.9.24.tar.gz
-cd xrdp-0.9.24
+wget -O /tmp/xrdp-0.10.0.tar.gz https://github.com/neutrinolabs/xrdp/releases/download/v0.10.0/xrdp-0.10.0.tar.gz
+tar zxvf /tmp/xrdp-0.10.0.tar.gz
+rm -f /tmp/xrdp-0.10.0.tar.gz
+cd xrdp-0.10.0
 #git clone --recursive https://github.com/neutrinolabs/xrdp.git
 #cd xrdp
 # cheap hack to fix a bug from libtoolize
