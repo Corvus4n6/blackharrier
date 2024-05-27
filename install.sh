@@ -285,6 +285,9 @@ ln -s /usr/local/sbin/xrdp{,-sesman} /usr/sbin
 # additional fix for xrdp error "Could not acquire name on session bus"
 # insert unset right before last fi
 sed -i -e 's/^fi/    unset DBUS_SESSION_BUS_ADDRESS\nfi/' /etc/X11/Xsession.d/80mate-environment
+# add gksudo fix for xrdp
+echo "export XAUTHORITY=${HOME}/.Xauthority" > /home/${MAINUSER}/.xsessionrc
+chown ${MAINUSER} /home/${MAINUSER}/.xsessionrc
 
 # setup ewf-tools with the latest version - much faster than old repo package
 apt install -y git autoconf automake autopoint libtool pkg-config flex bison libbz2-dev python3-dev
