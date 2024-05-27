@@ -282,6 +282,9 @@ ln -s /usr/local/sbin/xrdp{,-sesman} /usr/sbin
 # Note: for headless server installations or multi-desktop installations,you can set the default desktop instance for a login with:
 # sudo update-alternatives --config x-session-manager
 # This is a fix for issues where XRDP is trying to launch Gnome on a system without a Gnome desktop and it fails after remote login.
+# additional fix for xrdp error "Could not acquire name on session bus"
+# insert unset right before last fi
+sed -i -e 's/^fi/    unset DBUS_SESSION_BUS_ADDRESS\nfi/' /etc/X11/Xsession.d/80mate-environment
 
 # setup ewf-tools with the latest version - much faster than old repo package
 apt install -y git autoconf automake autopoint libtool pkg-config flex bison libbz2-dev python3-dev
