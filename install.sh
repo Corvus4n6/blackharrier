@@ -248,6 +248,9 @@ PKGLIST+="pigz pbzip2 pixz "
 # adding blake3
 PKGLIST+="b3sum "
 
+# adding wireguard
+PKGLIST+="wireguard wireguard-tools "
+
 # Install all the things
 apt install -y ${PKGLIST}
 
@@ -285,7 +288,7 @@ ln -s /usr/local/sbin/xrdp{,-sesman} /usr/sbin
 # additional fix for xrdp error "Could not acquire name on session bus"
 # insert unset right before last fi when building manually on server
 #sed -i -e 's/^fi/    unset DBUS_SESSION_BUS_ADDRESS\nfi/' /etc/X11/Xsession.d/80mate-environment
-# fix error under mint desktop - replace first fi block for mate 
+# fix error under mint desktop - replace first fi block for mate
 sed -i -e '1,/^fi/{s/^fi/    unset DBUS_SESSION_BUS_ADDRESS\nfi/}' /etc/X11/Xsession.d/99mint
 # add gksudo fix for xrdp
 echo "export XAUTHORITY=${HOME}/.Xauthority" > /home/${MAINUSER}/.xsessionrc
