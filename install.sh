@@ -533,6 +533,7 @@ sudo -u ${MAINUSER} -H gsettings set com.linuxmint.mintmenu applet-icon '/usr/sh
 
 # if we are missing the synaptic config - download it.
 if [ ! -f /root/.synaptic/synaptic.conf ]; then
+  mkdir -p /root/.synaptic
   cp config/synaptic.conf /root/.synaptic/synaptic.conf
 fi
 
