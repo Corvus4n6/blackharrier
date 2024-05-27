@@ -283,8 +283,10 @@ ln -s /usr/local/sbin/xrdp{,-sesman} /usr/sbin
 # sudo update-alternatives --config x-session-manager
 # This is a fix for issues where XRDP is trying to launch Gnome on a system without a Gnome desktop and it fails after remote login.
 # additional fix for xrdp error "Could not acquire name on session bus"
-# insert unset right before last fi
-sed -i -e 's/^fi/    unset DBUS_SESSION_BUS_ADDRESS\nfi/' /etc/X11/Xsession.d/80mate-environment
+# insert unset right before last fi when building manually on server
+#sed -i -e 's/^fi/    unset DBUS_SESSION_BUS_ADDRESS\nfi/' /etc/X11/Xsession.d/80mate-environment
+# fix error under mint desktop - replace first fi block for mate 
+sed -i -e '1,/^fi/{s/^fi/    unset DBUS_SESSION_BUS_ADDRESS\nfi/}' /etc/X11/Xsession.d/99mint
 # add gksudo fix for xrdp
 echo "export XAUTHORITY=${HOME}/.Xauthority" > /home/${MAINUSER}/.xsessionrc
 chown ${MAINUSER} /home/${MAINUSER}/.xsessionrc
