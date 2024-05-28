@@ -18,5 +18,6 @@ if [ "$ROOTUSER" != "P" ]; then
 fi
 
 if [ "$NOTIFY" == "1" ]; then
-    zenity --warning --title="WARNING: Password Not Set" --width=480 --text="${NOTIFICATION}" 2> /dev/null
+    NOTIFICATIONFMT=`printf "${NOTIFICATION}" | fold -s -w80 -`
+    zenity --warning --title="WARNING: Password Not Set" --text="${NOTIFICATIONFMT}" 2> /dev/null
 fi
