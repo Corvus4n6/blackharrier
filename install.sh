@@ -292,6 +292,9 @@ ln -s /usr/local/sbin/xrdp{,-sesman} /usr/sbin
 # fix error under mint desktop - replace first fi block for mate
 sed -i -e '1,/^fi/{s/^fi/    unset DBUS_SESSION_BUS_ADDRESS\nfi/}' /etc/X11/Xsession.d/99mint
 
+# fix authorization issues when remotely connected via xrdp
+echo "#!/usr/bin/bash\n/usr/bin/xhost + local:" > /etc/profile.d/xrdp_sudofix.sh
+
 # setup ewf-tools with the latest version - much faster than old repo package
 apt install -y git autoconf automake autopoint libtool pkg-config flex bison libbz2-dev python3-dev
 git clone https://github.com/libyal/libewf.git
@@ -442,6 +445,10 @@ done
 # install wallpaper and set as default
 cp images/Black_Harrier.png /usr/share/backgrounds/Black_Harrier.png
 
+# fix schema settings and overrides
+sed -i -e 's/\/usr\/share\/backgrounds\/linuxmint\/default_background\.jpg/\/usr\/share\/backgrounds\/Black_Harrier.png/' /etc/lightdm/lightdm-gtk-greeter.conf.d/99_linuxmint.conf
+sed -i -e 's/\/usr\/share\/backgrounds\/linuxmint\/default_background\.jpg/\/usr\/share\/backgrounds\/Black_Harrier.png/' /usr/share/glib-2.0/schemas/mint-artwork.gschema.override
+
 # set up the custom grub splash page
 cp images/splash.tga /usr/share/grub/splash.tga
 echo "GRUB_BACKGROUND=\"/usr/share/grub/splash.tga\"" >> /etc/default/grub
@@ -517,6 +524,9 @@ sudo -u ${MAINUSER} -H gsettings set org.mate.screensaver mode 'blank-only'
 sudo -u ${MAINUSER} -H gsettings set org.mate.screensaver lock-enabled false
 sudo -u ${MAINUSER} -H gsettings set org.mate.screensaver idle-activation-enabled false
 sudo -u ${MAINUSER} -H gsettings set org.mate.screensaver picture-filename '/usr/share/backgrounds/Black_Harrier.png'
+
+# replace greeter and default rm background - format be dammed.
+ln -sf /usr/share/backgrounds/Black_Harrier.png /usr/share/backgrounds/linuxmint/default_background.jpg
 
 # thematic tweaks
 sudo -u ${MAINUSER} -H gsettings set org.mate.peripherals-mouse cursor-theme 'Adwaita'
