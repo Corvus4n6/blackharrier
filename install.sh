@@ -653,6 +653,9 @@ rm -rf /root/.ssh/known_hosts
 truncate -s 0 /root/.bash_history
 history -c
 
+# branding tweak on menu
+sed -i -e 's/^DESCRIPTION=.*/DESCRIPTION="Black Harrier Linux 11"/' /etc/linuxmint/info
+
 # LSB release tweak and create the right boot menu entries
 sed -i 's/DISTRIB_ID.*/DISTRIB_ID=BlackHarrier/' /etc/lsb-release
 sed -i 's/DISTRIB_RELEASE.*/DISTRIB_RELEASE=11/' /etc/lsb-release
