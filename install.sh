@@ -36,7 +36,7 @@ else
 fi
 
 # workstation mode?
-printf "Workstation mode? Allows access to hardware clock and will not delete user"
+printf "Workstation mode? Enables access to hardware clock and will not delete user"
 printf "passwords. Portable mode is default. [y/N]: "
 read TMPMODE
 if [ "${TMPMODE}" == "" ] || [ "${TMPMODE}" == "n" ]  || [ "${TMPMODE}" == "N" ]; then
@@ -49,7 +49,7 @@ else
 fi
 
 # pre-cleaning
-apt purge -y hypnotix hexchat mintwelcome evolution-data-server evolution-data-server-common
+apt purge -y hypnotix mintwelcome evolution-data-server evolution-data-server-common
 apt autoremove -y
 
 # stripping out old kernels and saving space
@@ -71,8 +71,8 @@ if [ "${KILLKERNS}" == "y" ]  || [ "${KILLKERNS}" == "Y" ]; then
 fi
 
 # add fdisk - not default in ubuntu 23.10
-# resolvconf needed for networking and wireguard
-apt install -y fdisk resolvconf
+# systemd-resolved aka resolvconf needed for networking and wireguard
+apt install -y fdisk systemd-resolved
 
 # need to differentiate between EFI and MBR modes
 # determine what kind of partition structure this is and react accordingly - failed on encrypted mapper path
@@ -113,8 +113,8 @@ wget --spider -nv https://github.com/neutrinolabs/xrdp/releases/download/v0.10.0
 wget --spider -nv https://downloads.volatilityfoundation.org/volatility3/symbols/windows.zip
 wget --spider -nv https://downloads.volatilityfoundation.org/volatility3/symbols/mac.zip
 wget --spider -nv https://downloads.volatilityfoundation.org/volatility3/symbols/linux.zip
-wget --spider -nv https://github.com/veracrypt/VeraCrypt/releases/download/VeraCrypt_1.26.7/veracrypt-1.26.7-Ubuntu-22.04-amd64.deb
-
+wget --spider -nv https://github.com/wxWidgets/wxWidgets/releases/download/v3.0.5.1/wxWidgets-3.0.5.1.tar.bz2
+wget --spider -nv https://github.com/veracrypt/VeraCrypt.git
 echo "All external content is reachable. Installing..."
 
 # set time to UTC
@@ -144,16 +144,48 @@ fi
 # clean up software we don't need - mostly checking at this point
 apt autoremove -y
 
-# disable screensaver since we will have no passwords for users in live, portable mode and they would be very stuck
-if [ ${SETUPMODE} == "portable" ]; then
-  sudo -u ${MAINUSER} -H gsettings set org.mate.screensaver lock-enabled false
-  sudo -u ${MAINUSER} -H gsettings set org.mate.screensaver idle-activation-enabled false
-fi
-
 # preconfigure settings in the configdb
 apt install -y debconf debconf-utils
 # preconfigure some settings - wireshark, mdadm, postfix
 debconf-set-selections config/debconf.txt
+
+# XML is the *worst* format
+apt install xmlstarlet
+
+if [ ${SETUPMODE} == "portable" ]; then
+
+  # update screensaver schemas
+  XMLFILE="/usr/share/glib-2.0/schemas/org.mate.screensaver.gschema.xml"
+  cp -v ${XMLFILE} /tmp/schematemp1.xml
+  # disable idle activation
+  xmlstarlet ed -N _=urn:local:xml -u '//key[@name="idle-activation-enabled"]/default/text()' -v false /tmp/schematemp1.xml > /tmp/schematemp2.xml
+  # disable lock
+  xmlstarlet ed -N _=urn:local:xml -u '//key[@name="lock-enabled"]/default/text()' -v false /tmp/schematemp2.xml > /tmp/schematemp3.xml
+  # update lock screen image
+  xmlstarlet ed -N _=urn:local:xml -u '//key[@name="picture-filename"]/default/text()' -v "'/usr/share/backgrounds/Black_Harrier.png'" /tmp/schematemp3.xml > /tmp/schematemp4.xml
+  # validate or die
+  xmlstarlet val /tmp/schematemp4.xml || exit 1
+  # replace original file
+  cp -v /tmp/schematemp4.xml ${XMLFILE}
+  # cleanup
+  rm /tmp/schematemp*.xml
+
+  # update power-manager schemas
+  XMLFILE="/usr/share/glib-2.0/schemas/org.mate.power-manager.gschema.xml"
+  cp -v ${XMLFILE} /tmp/schematemp1.xml
+  # disable lock-blank-screen
+  xmlstarlet ed -N _=urn:local:xml -u '//key[@name="lock-blank-screen"]/default/text()' -v false /tmp/schematemp1.xml > /tmp/schematemp2.xml
+  # validate or die
+  xmlstarlet val /tmp/schematemp2.xml || exit 1
+  # replace original file
+  cp -v /tmp/schematemp2.xml ${XMLFILE}
+  # cleanup
+  rm /tmp/schematemp*.xml
+
+  # reload all settings
+  glib-compile-schemas /usr/share/glib-2.0/schemas/
+
+fi
 
 # build apt install list of everything we need
 # FYI - about a 2MB limit on this string
@@ -192,7 +224,7 @@ PKGLIST+="b43-fwcutter firmware-b43-installer "
 
 # adding support for Windows Volume Shadows with vshadowinfo and vshadowmount
 PKGLIST+="build-essential debhelper fakeroot autotools-dev libfuse-dev python3-all-dev "
-PKGLIST+="libvshadow1 libvshadow-dev libvshadow-utils "
+PKGLIST+="libvshadow1t64 libvshadow-dev libvshadow-utils "
 
 # diffpdf and supporting tools
 PKGLIST+="make automake poppler-utils diffpdf "
@@ -251,6 +283,9 @@ PKGLIST+="b3sum "
 # adding wireguard
 PKGLIST+="wireguard wireguard-tools "
 
+# crudini for editing ini-type files via script
+PKGLIST+="crudini "
+
 # Install all the things
 apt install -y ${PKGLIST}
 
@@ -276,7 +311,7 @@ cd xrdp-0.10.0
 #ln -s ../ltmain.sh ltmain.sh
 ./bootstrap
 ./configure --enable-fuse --enable-mp3lame --enable-pixman
-make
+make -j$(nproc)
 make install
 cd ..
 rm -rf xrdp*
@@ -295,7 +330,7 @@ sed -i -e '1,/^fi/{s/^fi/    unset DBUS_SESSION_BUS_ADDRESS\nfi/}' /etc/X11/Xses
 # fix authorization issues when remotely connected via xrdp
 echo "#!/usr/bin/bash\n/usr/bin/xhost + local:" > /etc/profile.d/xrdp_sudofix.sh
 
-# setup ewf-tools with the latest version - much faster than old repo package
+# setup ewf-tools with the latest version - much faster than older repo package
 apt install -y git autoconf automake autopoint libtool pkg-config flex bison libbz2-dev python3-dev
 git clone https://github.com/libyal/libewf.git
 cd libewf
@@ -304,7 +339,7 @@ cd libewf
 ln -s ../ltmain.sh ltmain.sh
 ./autogen.sh
 ./configure --enable-python
-make
+make -j$(nproc)
 make install
 ldconfig
 cd ..
@@ -317,7 +352,7 @@ cd libforensic1394
 mkdir build
 cd build
 cmake -G"Unix Makefiles" ../
-make
+make -j$(nproc)
 make install
 cd ../../
 rm -rf libforensic1394
@@ -335,7 +370,7 @@ bash etc/CONFIGURE_UBUNTU20LTS.bash
 set -e # back to normal
 ./bootstrap.sh
 ./configure
-make
+make -j$(nproc)
 sudo make install
 cd ..
 rm -rf bulk_extractor
@@ -353,11 +388,28 @@ echo "AvoidEncaseProblems = on" >> /etc/guymager/local.cfg
 # assuming will probably run on external in most cases
 echo "vm.swappiness=5" >> /etc/sysctl.conf
 
-# veracrypt
+# veracrypt - forced to compile for 1.26.12 for now.
+# BORKEN on LinuxMint 22 Wilma - veracrypt depends libwxgtk3.0-gtk3-0v5 but it is not installable as a deb package
 # find the latest URL - TODO - find and pull from main site
-wget -O /tmp/veracrypt.deb https://github.com/veracrypt/VeraCrypt/releases/download/VeraCrypt_1.26.7/veracrypt-1.26.7-Ubuntu-22.04-amd64.deb
-apt install -y /tmp/veracrypt.deb
-rm /tmp/veracrypt.deb
+###wget -O /tmp/veracrypt.deb https://github.com/veracrypt/VeraCrypt/releases/download/VeraCrypt_1.26.7/veracrypt-1.26.7-Ubuntu-22.04-amd64.deb
+###apt install -y /tmp/veracrypt.deb
+###rm /tmp/veracrypt.deb
+# have to compile from source
+apt install -y build-essential yasm pkg-config libfuse-dev git libpcsclite-dev libgtk2.0-dev libcppunit-dev libopengl-dev freeglut3-dev
+wget -O /tmp/wxWidgets-3.0.5.1.tar.bz2 https://github.com/wxWidgets/wxWidgets/releases/download/v3.0.5.1/wxWidgets-3.0.5.1.tar.bz2
+CWD=`pwd`
+cd /tmp/
+tar -j -x -v -f /tmp/wxWidgets-3.0.5.1.tar.bz2
+rm -f /tmp/wxWidgets-3.0.5.1.tar.bz2
+git clone https://github.com/veracrypt/VeraCrypt.git
+cd /tmp/VeraCrypt/src
+make -j$(nproc) WXSTATIC=1 WX_ROOT=/tmp/wxWidgets-3.0.5.1 wxbuild
+make -j$(nproc) WXSTATIC=1
+make install
+# cleanup
+cd ${CWD}
+rm -rf /tmp/wxWidgets-3.0.5.1
+rm -rf /tmp/VeraCrypt
 
 # install volatility3
 apt install -y python3-full python3-dev libpython3-dev python3-pip python3-setuptools python3-wheel
@@ -414,6 +466,7 @@ systemctl disable xrdp-sesman
 # TODO quicklaunch toggles and docs
 
 # download xrdp config and logo and replace default
+# TODO update and modify ini file
 cp config/xrdp.ini /etc/xrdp/xrdp.ini
 mkdir -p /usr/local/share/blackharrier/
 cp images/BH_logo.bmp /usr/local/share/blackharrier/logo.bmp
@@ -423,7 +476,6 @@ chown 666 /usr/local/share/blackharrier/logo.bmp
 # temporarily disabled for BH11 dev
 ###sed -i '$i\ \ \ \ unset DBUS_SESSION_BUS_ADDRESS' /etc/X11/Xsession.d/80mate-environment
 
-#Downloading / installing scripts from blackharrier.net
 # password check script
 cp script/bhpwdchk.sh /usr/local/bin/bhpwdchk
 chmod +x /usr/local/bin/bhpwdchk
@@ -446,8 +498,11 @@ done
 cp images/Black_Harrier.png /usr/share/backgrounds/Black_Harrier.png
 
 # fix schema settings and overrides
-sed -i -e 's/\/usr\/share\/backgrounds\/linuxmint\/default_background\.jpg/\/usr\/share\/backgrounds\/Black_Harrier.png/' /etc/lightdm/lightdm-gtk-greeter.conf.d/99_linuxmint.conf
-sed -i -e 's/\/usr\/share\/backgrounds\/linuxmint\/default_background\.jpg/\/usr\/share\/backgrounds\/Black_Harrier.png/' /usr/share/glib-2.0/schemas/mint-artwork.gschema.override
+crudini --inplace --set --format=ini /etc/lightdm/lightdm-gtk-greeter.conf.d/99_linuxmint.conf greeter "background" "/usr/share/backgrounds/Black_Harrier.png"
+crudini --inplace --set --format=ini /usr/share/glib-2.0/schemas/mint-artwork.gschema.override x.dm.slick-greeter "background" "'/usr/share/backgrounds/Black_Harrier.png'"
+crudini --inplace --set --format=ini /usr/share/glib-2.0/schemas/mint-artwork.gschema.override org.gnome.desktop.background "picture-uri" "'file:///usr/share/backgrounds/Black_Harrier.png'"
+crudini --inplace --set --format=ini /usr/share/glib-2.0/schemas/mint-artwork.gschema.override org.cinnamon.desktop.background "picture-uri" "'file:///usr/share/backgrounds/Black_Harrier.png'"
+crudini --inplace --set --format=ini /usr/share/glib-2.0/schemas/mint-artwork.gschema.override org.mate.background "picture-filename" "'/usr/share/backgrounds/Black_Harrier.png'"
 
 # set up the custom grub splash page
 cp images/splash.tga /usr/share/grub/splash.tga
@@ -485,56 +540,135 @@ sed -i 's/\/swapfile.*//' /etc/fstab
 update-initramfs -u
 update-grub2
 
-# dusable audio
-sudo -u ${MAINUSER} -H gsettings set org.mate.sound event-sounds false
-sudo -u ${MAINUSER} -H gsettings set org.mate.sound theme-name '__no_sounds'
-
-# set desktop graphics to fit
-sudo -u ${MAINUSER} -H gsettings set org.mate.background picture-filename '/usr/share/backgrounds/Black_Harrier.png'
-sudo -u ${MAINUSER} -H gsettings set org.mate.background picture-options 'zoom'
-
-# update dconf to prevent autoruns, automounting, other preferences
-sudo -u ${MAINUSER} -H gsettings set org.mate.media-handling automount false
-sudo -u ${MAINUSER} -H gsettings set org.mate.media-handling automount-open false
-sudo -u ${MAINUSER} -H gsettings set org.mate.media-handling autorun-never true
-
-# prevent the display from going to sleep when plugged in
-sudo -u ${MAINUSER} -H gsettings set org.mate.power-manager sleep-display-ac 0
-
-# show monitors in panel
-sudo -u ${MAINUSER} -H gsettings set org.mate.SettingsDaemon.plugins.xrandr show-notification-icon true
-
-# disable internet search from menu
-sudo -u ${MAINUSER} -H gsettings set com.linuxmint.mintmenu.plugins.applications enable-internet-search false
-
-# list view - hidden files - backup files
-
-# Set file manager preferences
-sudo -u ${MAINUSER} -H gsettings set org.mate.caja.preferences default-folder-viewer 'list-view'
-sudo -u ${MAINUSER} -H gsettings set org.mate.caja.preferences show-hidden-files true
-sudo -u ${MAINUSER} -H gsettings set org.mate.caja.preferences show-backup-files true
-
-# clock panel settings - removed since dconf isn't sticking and mate panel prefs were an issue to set
-
-# hide home folder from the desktop
-sudo -u ${MAINUSER} -H gsettings set org.mate.caja.desktop home-icon-visible false
-
-# screensaver adjustments - blank only
-sudo -u ${MAINUSER} -H gsettings set org.mate.screensaver mode 'blank-only'
-sudo -u ${MAINUSER} -H gsettings set org.mate.screensaver lock-enabled false
-sudo -u ${MAINUSER} -H gsettings set org.mate.screensaver idle-activation-enabled false
-sudo -u ${MAINUSER} -H gsettings set org.mate.screensaver picture-filename '/usr/share/backgrounds/Black_Harrier.png'
+# update schema preferences
 
 # replace greeter and default rm background - format be dammed.
 ln -sf /usr/share/backgrounds/Black_Harrier.png /usr/share/backgrounds/linuxmint/default_background.jpg
-
 # thematic tweaks
-sudo -u ${MAINUSER} -H gsettings set org.mate.peripherals-mouse cursor-theme 'Adwaita'
 mkdir -p /usr/share/icons/blackharrier
 chmod +x /usr/share/icons/blackharrier
 cp icon/crowhead.svg /usr/share/icons/blackharrier/crowhead.svg
-# change the icon so we know it's BH11 on the menu
-sudo -u ${MAINUSER} -H gsettings set com.linuxmint.mintmenu applet-icon '/usr/share/icons/blackharrier/crowhead.svg'
+
+# update sound settings
+XMLFILE="/usr/share/glib-2.0/schemas/org.mate.sound.gschema.xml"
+cp -v ${XMLFILE} /tmp/schematemp1.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="event-sounds"]/default/text()' -v false /tmp/schematemp1.xml > /tmp/schematemp2.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="theme-name"]/default/text()' -v "'__no_sounds'" /tmp/schematemp2.xml > /tmp/schematemp3.xml
+xmlstarlet val /tmp/schematemp3.xml || exit 1
+cp -v /tmp/schematemp3.xml ${XMLFILE}
+# cleanup
+rm /tmp/schematemp*.xml
+# update background settings
+XMLFILE="/usr/share/glib-2.0/schemas/org.mate.background.gschema.xml"
+cp -v ${XMLFILE} /tmp/schematemp1.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="picture-filename"]/default/text()' -v "'/usr/share/backgrounds/Black_Harrier.png'" /tmp/schematemp1.xml > /tmp/schematemp2.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="picture-options"]/default/text()' -v "'zoom'" /tmp/schematemp2.xml > /tmp/schematemp3.xml
+# validate or die
+xmlstarlet val /tmp/schematemp3.xml || exit 1
+# replace original file
+cp -v /tmp/schematemp3.xml ${XMLFILE}
+# cleanup
+rm /tmp/schematemp*.xml
+
+# update media handling
+XMLFILE="/usr/share/glib-2.0/schemas/org.mate.media-handling.gschema.xml"
+cp -v ${XMLFILE} /tmp/schematemp1.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="automount"]/default/text()' -v false /tmp/schematemp1.xml > /tmp/schematemp2.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="automount-open"]/default/text()' -v false /tmp/schematemp2.xml > /tmp/schematemp3.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="autorun-never"]/default/text()' -v true /tmp/schematemp3.xml > /tmp/schematemp4.xml
+# validate or die
+xmlstarlet val /tmp/schematemp4.xml || exit 1
+# replace original file
+cp -v /tmp/schematemp4.xml ${XMLFILE}
+# cleanup
+rm /tmp/schematemp*.xml
+
+# update power settings
+XMLFILE="/usr/share/glib-2.0/schemas/org.mate.power-manager.gschema.xml"
+cp -v ${XMLFILE} /tmp/schematemp1.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="sleep-display-ac"]/default/text()' -v 0 /tmp/schematemp1.xml > /tmp/schematemp2.xml
+# validate or die
+xmlstarlet val /tmp/schematemp2.xml || exit 1
+# replace original file
+cp -v /tmp/schematemp2.xml ${XMLFILE}
+# cleanup
+rm /tmp/schematemp*.xml
+
+# show monitors in panel
+XMLFILE="/usr/share/glib-2.0/schemas/org.mate.SettingsDaemon.plugins.xrandr.gschema.xml"
+cp -v ${XMLFILE} /tmp/schematemp1.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-notification-icon"]/default/text()' -v true /tmp/schematemp1.xml > /tmp/schematemp2.xml
+# validate or die
+xmlstarlet val /tmp/schematemp2.xml || exit 1
+# replace original file
+cp -v /tmp/schematemp2.xml ${XMLFILE}
+# cleanup
+rm /tmp/schematemp*.xml
+
+# menu settings
+XMLFILE="/usr/share/glib-2.0/schemas/com.linuxmint.mintmenu.gschema.xml"
+cp -v ${XMLFILE} /tmp/schematemp1.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="enable-internet-search"]/default/text()' -v false /tmp/schematemp1.xml > /tmp/schematemp2.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-package-manager"]/default/text()' -v true /tmp/schematemp2.xml > /tmp/schematemp3.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-terminal"]/default/text()' -v true /tmp/schematemp3.xml > /tmp/schematemp4.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="applet-icon"]/default/text()' -v "'/usr/share/icons/blackharrier/crowhead.svg'" /tmp/schematemp4.xml > /tmp/schematemp5.xml
+# validate or die
+xmlstarlet val /tmp/schematemp5.xml || exit 1
+# replace original file
+cp -v /tmp/schematemp5.xml ${XMLFILE}
+# cleanup
+rm /tmp/schematemp*.xml
+
+# file manager settings
+XMLFILE="/usr/share/glib-2.0/schemas/org.mate.caja.gschema.xml"
+cp -v ${XMLFILE} /tmp/schematemp1.xml
+# disable idle activation
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="default-folder-viewer"]/default/text()' -v "'list-view'" /tmp/schematemp1.xml > /tmp/schematemp2.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-hidden-files"]/default/text()' -v true /tmp/schematemp2.xml > /tmp/schematemp3.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-backup-files"]/default/text()' -v true /tmp/schematemp3.xml > /tmp/schematemp4.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="home-icon-visible"]/default/text()' -v false /tmp/schematemp4.xml > /tmp/schematemp5.xml
+# validate or die
+xmlstarlet val /tmp/schematemp5.xml || exit 1
+# replace original file
+cp -v /tmp/schematemp5.xml ${XMLFILE}
+# cleanup
+rm /tmp/schematemp*.xml
+
+# clock preferences
+XMLFILE="/usr/share/glib-2.0/schemas/org.mate.panel.applet.clock.gschema.xml"
+cp -v ${XMLFILE} /tmp/schematemp1.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="format"]/default/text()' -v "'24-hour'" /tmp/schematemp1.xml > /tmp/schematemp2.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-seconds"]/default/text()' -v true /tmp/schematemp2.xml > /tmp/schematemp3.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-date"]/default/text()' -v true /tmp/schematemp3.xml > /tmp/schematemp4.xml
+# validate or die
+xmlstarlet val /tmp/schematemp4.xml || exit 1
+# replace original file
+cp -v /tmp/schematemp4.xml ${XMLFILE}
+# cleanup
+rm /tmp/schematemp*.xml
+
+# thematic tweaks - pointer
+XMLFILE="/usr/share/glib-2.0/schemas/org.mate.peripherals-mouse.gschema.xml"
+cp -v ${XMLFILE} /tmp/schematemp1.xml
+xmlstarlet ed -N _=urn:local:xml -u '//key[@name="cursor-theme"]/default/text()' -v "'Adwaita'" /tmp/schematemp1.xml > /tmp/schematemp2.xml
+# validate or die
+xmlstarlet val /tmp/schematemp2.xml || exit 1
+# replace original file
+cp -v /tmp/schematemp2.xml ${XMLFILE}
+# cleanup
+rm /tmp/schematemp*.xml
+
+# override the minty override mouse cursors
+crudini --inplace --set --format=ini /usr/share/glib-2.0/schemas/mint-artwork.gschema.override x.dm.slick-greeter "cursor-theme-name" "'Adwaita'"
+crudini --inplace --set --format=ini /usr/share/glib-2.0/schemas/mint-artwork.gschema.override org.gnome.desktop.interface "cursor-theme" "'Adwaita'"
+crudini --inplace --set --format=ini /usr/share/glib-2.0/schemas/mint-artwork.gschema.override org.cinnamon.desktop.interface "cursor-theme" "'Adwaita'"
+crudini --inplace --set --format=ini /usr/share/glib-2.0/schemas/mint-artwork.gschema.override org.mate.peripherals-mouse "cursor-theme" "'Adwaita'"
+
+# address other overrides
+crudini --inplace --del --format=ini /usr/share/glib-2.0/schemas/mint-artwork.gschema.override org.mate.sound
+
+# reload all schemas
+glib-compile-schemas /usr/share/glib-2.0/schemas/
 
 # adjust synaptic preferences - clean cache and delete old history to save space
 # disable die on error for greps that may miss
@@ -636,7 +770,7 @@ chmod +x /usr/local/sbin/bhreplicate
 cp script/bhupdate.sh /usr/local/sbin/bhupdate
 chmod +x /usr/local/sbin/bhupdate
 
-# delete all passwords if we are in portable mode - leave alone for workstation
+# delete all user passwords if we are in portable mode - leave alone for workstation
 if [ ${SETUPMODE} == "portable" ]; then
 	sed -i 's/:$[^:]*:/:*:/g' /etc/shadow
 	# delete backup shadow file
@@ -662,7 +796,7 @@ sed -i 's/DISTRIB_RELEASE.*/DISTRIB_RELEASE=11/' /etc/lsb-release
 sed -i 's/DISTRIB_CODENAME.*/DISTRIB_COENAME=\"BH11Mint\"/' /etc/lsb-release
 sed -i 's/DISTRIB_DESCRIPTION.*/DISTRIB_DESCRIPTION=\"Black Harrier Linux 11\"/' /etc/lsb-release
 
-echo "Installation complete. Thank you for your patience and choosing Black Harrier Linux. This system will reboot in 5 seconds to complete the installation process."
-sleep 5
+echo "Installation complete. Thank you for your patience and choosing Black Harrier Linux. This system will reboot in 10 seconds to complete the installation process."
+sleep 10
 reboot
 exit
