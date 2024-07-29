@@ -942,11 +942,11 @@ rm -v ${ROOTMOUNT}/tmp/BHGrubinstall
 #grub-install --bootloader-id ubuntu ${DEVICE}
 # unmount the bound directories
 sync
-umount ${ROOTMOUNT}/run
-umount ${ROOTMOUNT}/sys
-umount ${ROOTMOUNT}/proc
-umount ${ROOTMOUNT}/dev/pts
-# sometimes this is overly busy - lazy unmount?
+# lazy unmount to avoid spurious busy mountpoints 
+umount -l ${ROOTMOUNT}/run
+umount -l ${ROOTMOUNT}/sys
+umount -l ${ROOTMOUNT}/proc
+umount -l ${ROOTMOUNT}/dev/pts
 umount -l ${ROOTMOUNT}/dev
 
 # disable error catching for cleanup
