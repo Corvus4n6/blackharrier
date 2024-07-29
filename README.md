@@ -33,4 +33,4 @@ Running this install script on your existing Linux system is not recommended and
 
 ## Pre-built Bootable Images
 
-Pre-built disk image and virtual machine OVA files are available for download at the [Black Harrier Webiste](https://blackharrier.net)
+Pre-built disk image and virtual machine OVA files are available for download at the [Black Harrier Website](https://blackharrier.net)
