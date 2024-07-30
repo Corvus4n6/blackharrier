@@ -938,26 +938,32 @@ chroot ${ROOTMOUNT} /tmp/BHGrubinstall
 # erase the temporary script
 rm -v ${ROOTMOUNT}/tmp/BHGrubinstall
 #grub-install --bootloader-id ubuntu ${DEVICE}
+
 # unmount the bound directories
 sync
-# lazy unmount to avoid spurious busy mountpoints
-umount -l ${ROOTMOUNT}/run
-umount -l ${ROOTMOUNT}/sys
-umount -l ${ROOTMOUNT}/proc
-umount -l ${ROOTMOUNT}/dev/pts
-umount -l ${ROOTMOUNT}/dev
+sleep 5
+# add lazy unmount failover to avoid spurious busy mountpoints
+umount ${ROOTMOUNT}/run || umount -lv ${ROOTMOUNT}/run
+umount ${ROOTMOUNT}/sys || umount -lv ${ROOTMOUNT}/sys
+umount ${ROOTMOUNT}/proc || umount -lv ${ROOTMOUNT}/proc
+umount ${ROOTMOUNT}/dev/pts || umount -lv ${ROOTMOUNT}/dev/pts
+umount ${ROOTMOUNT}/dev || umount -lv ${ROOTMOUNT}/dev
+sync
+sleep 5
 
 # run the cleanup script
 cd ${ROOTMOUNT}
 #/usr/local/sbin/bhcleanup
 
 find ./var/log/ -type f -exec truncate -s 0 -c '{}' \;
+truncate -s 0 -c ./home/*/.local/.bash_history
 truncate -s 0 -c ./home/*/.local/share/recently-used.xbel
 truncate -s 0 -c ./var/run/utmp
 truncate -s 0 -c ./var/btmp
 truncate -s 0 -c ./var/wtmp
 find ./var/log/ -type f -iname '*log.[0-9]*' -delete
 find ./var/log/ -type f -iname '*log.[0-9]*.gz' -delete
+rm -rf ./var/tmp/*
 
 echo Generating new host keys...
 ssh-keygen -q -t dsa -f ./etc/ssh/ssh_host_dsa_key -N '' -C root@BlackHarrier11
