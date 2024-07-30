@@ -921,6 +921,7 @@ echo "update-initramfs -d -k all" >> ${ROOTMOUNT}/tmp/BHGrubinstall
 echo "update-initramfs -c -k all" >> ${ROOTMOUNT}/tmp/BHGrubinstall
 echo "update-grub" >> ${ROOTMOUNT}/tmp/BHGrubinstall
 echo "grub-install --compress=xz --uefi-secure-boot -s ${DEVICE}" >> ${ROOTMOUNT}/tmp/BHGrubinstall
+# add exit
 
 # cleanup old LVM entries
 find ${ROOTMOUNT}/etc/lvm/ -type f ! -iname "*BH11.${UNIQUE}*" -delete
@@ -942,28 +943,29 @@ rm -v ${ROOTMOUNT}/tmp/BHGrubinstall
 # unmount the bound directories
 sync
 sleep 5
-# add lazy unmount failover to avoid spurious busy mountpoints
-umount ${ROOTMOUNT}/run || umount -lv ${ROOTMOUNT}/run
-umount ${ROOTMOUNT}/sys || umount -lv ${ROOTMOUNT}/sys
-umount ${ROOTMOUNT}/proc || umount -lv ${ROOTMOUNT}/proc
-umount ${ROOTMOUNT}/dev/pts || umount -lv ${ROOTMOUNT}/dev/pts
-umount ${ROOTMOUNT}/dev || umount -lv ${ROOTMOUNT}/dev
-sync
-sleep 5
+# recursive unmount chroot directories
+umount -v -R ${ROOTMOUNT}/run
+umount -v -R ${ROOTMOUNT}/sys
+umount -v -R ${ROOTMOUNT}/proc
+umount -v -R ${ROOTMOUNT}/dev/pts
+umount -v -R ${ROOTMOUNT}/dev
 
 # run the cleanup script
 cd ${ROOTMOUNT}
 #/usr/local/sbin/bhcleanup
 
 find ./var/log/ -type f -exec truncate -s 0 -c '{}' \;
+truncate -s 0 -c ./root/.bash_history
+truncate -s 0 -c ./root/.local/share/nano/search_history
 truncate -s 0 -c ./home/*/.local/.bash_history
+truncate -s 0 -c ./home/*/.local/share/nano/search_history
 truncate -s 0 -c ./home/*/.local/share/recently-used.xbel
 truncate -s 0 -c ./var/run/utmp
 truncate -s 0 -c ./var/btmp
 truncate -s 0 -c ./var/wtmp
 find ./var/log/ -type f -iname '*log.[0-9]*' -delete
 find ./var/log/ -type f -iname '*log.[0-9]*.gz' -delete
-rm -rf ./var/tmp/*
+find ./var/log/ -type f -iname '*log.old' -delete
 
 echo Generating new host keys...
 ssh-keygen -q -t dsa -f ./etc/ssh/ssh_host_dsa_key -N '' -C root@BlackHarrier11
@@ -1008,13 +1010,14 @@ if [[ ${MODE} == "EFI" ]]; then
         echo "Cleaning unallocated space in the EFI boot partition ..."
         sfill -fllzv ${ROOTMOUNT}/boot/efi/
     fi
-    umount ${ROOTMOUNT}/boot/efi
+    umount -v -R ${ROOTMOUNT}/boot/efi
 fi
 if [[ "${ENCRYPT}" == "true" ]] ; then
-    umount ${ROOTMOUNT}/boot
+    umount -v -R ${ROOTMOUNT}/boot
 fi
-# strangely busy - lazy unload
-umount -l ${ROOTMOUNT}
+
+sync
+umount -v -R ${ROOTMOUNT}
 
 # TODO - forensic analysis of unallocated for zerofree vs sfill?
 if [[ "${INSECURE}" != "true" ]]; then
