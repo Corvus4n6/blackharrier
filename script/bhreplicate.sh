@@ -754,11 +754,9 @@ printf "/dev/*\n/proc/*\n/sys/*\n/tmp/*\n/run/*\n/mnt/*\n/media/*\n/lost+found
 /var/log/*/*.gz\n/var/log/*.xz\n/var/log/*/*.xz\n/var/log/*.old
 /var/log/*/*.old\n/var/log/journal/*\n/var/log/samba/*\n*~\n/root/.synaptic/log
 /etc/ssh/ssh_host_*\n/root/snap\nNetworkManager.pid\n*.lock
-/var/lib/NetworkManager/*.lease\n\/etc\/group\-\n\/etc\/passwd\-" \
+/var/lib/NetworkManager/*.lease\n\/etc\/group\-\n\/etc\/passwd\-\n\/etc\/gshadow\-\n\/etc\/subgid\-\n\/etc\/subuid\-" \
  >> /dev/shm/rsyncexclude.tmp
-# --exclude-from=/dev/shm/rsyncexclude.tmp
 # sync all the data...
-#rsync -aAXv --exclude={"/dev/*","/proc/*","/sys/*","/tmp/*","/run/*","/mnt/*","/media/*","/lost+found","/swapfile","home/*/.thumbnails/*","/home/*/.cache/mozilla/*","/home/*/.cache/google-chrome/*","/home/*/.local/share/Trash/*","/home/*/.gvfs","/var/backups/*"} /* ${ROOTMOUNT}
 echo "Replicating data to new filesystems..."
 # TODO - write a better way to do this
 rsync -aAXH --no-i-r --links --ignore-missing-args --info=progress2 --exclude-from=/dev/shm/rsyncexclude.tmp /* ${ROOTMOUNT}
@@ -942,24 +940,24 @@ rm -v ${ROOTMOUNT}/tmp/BHGrubinstall
 #grub-install --bootloader-id ubuntu ${DEVICE}
 # unmount the bound directories
 sync
-# lazy unmount to avoid spurious busy mountpoints 
+# lazy unmount to avoid spurious busy mountpoints
 umount -l ${ROOTMOUNT}/run
 umount -l ${ROOTMOUNT}/sys
 umount -l ${ROOTMOUNT}/proc
 umount -l ${ROOTMOUNT}/dev/pts
 umount -l ${ROOTMOUNT}/dev
 
-# disable error catching for cleanup
-set +e
 # run the cleanup script
 cd ${ROOTMOUNT}
 #/usr/local/sbin/bhcleanup
 
-find ./var/log/ -type f -exec truncate -s 0 '{}' \;
-truncate -s 0 ./home/*/.local/share/recently-used.xbel
-
-# re-enable error catching
-set -e
+find ./var/log/ -type f -exec truncate -s 0 -c '{}' \;
+truncate -s 0 -c ./home/*/.local/share/recently-used.xbel
+truncate -s 0 -c ./var/run/utmp
+truncate -s 0 -c ./var/btmp
+truncate -s 0 -c ./var/wtmp
+find ./var/log/ -type f -iname '*log.[0-9]*' -delete
+find ./var/log/ -type f -iname '*log.[0-9]*.gz' -delete
 
 echo Generating new host keys...
 ssh-keygen -q -t dsa -f ./etc/ssh/ssh_host_dsa_key -N '' -C root@BlackHarrier11
