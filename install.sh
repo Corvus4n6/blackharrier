@@ -156,7 +156,7 @@ if [ ${SETUPMODE} == "portable" ]; then
 
   # update screensaver schemas
   XMLFILE="/usr/share/glib-2.0/schemas/org.mate.screensaver.gschema.xml"
-  cp -v ${XMLFILE} /tmp/schematemp1.xml
+  cp ${XMLFILE} /tmp/schematemp1.xml
   # disable idle activation
   xmlstarlet ed -N _=urn:local:xml -u '//key[@name="idle-activation-enabled"]/default/text()' -v false /tmp/schematemp1.xml > /tmp/schematemp2.xml
   # disable lock
@@ -166,19 +166,19 @@ if [ ${SETUPMODE} == "portable" ]; then
   # validate or die
   xmlstarlet val /tmp/schematemp4.xml || exit 1
   # replace original file
-  cp -v /tmp/schematemp4.xml ${XMLFILE}
+  cp /tmp/schematemp4.xml ${XMLFILE}
   # cleanup
   rm /tmp/schematemp*.xml
 
   # update power-manager schemas
   XMLFILE="/usr/share/glib-2.0/schemas/org.mate.power-manager.gschema.xml"
-  cp -v ${XMLFILE} /tmp/schematemp1.xml
+  cp ${XMLFILE} /tmp/schematemp1.xml
   # disable lock-blank-screen
   xmlstarlet ed -N _=urn:local:xml -u '//key[@name="lock-blank-screen"]/default/text()' -v false /tmp/schematemp1.xml > /tmp/schematemp2.xml
   # validate or die
   xmlstarlet val /tmp/schematemp2.xml || exit 1
   # replace original file
-  cp -v /tmp/schematemp2.xml ${XMLFILE}
+  cp /tmp/schematemp2.xml ${XMLFILE}
   # cleanup
   rm /tmp/schematemp*.xml
 
@@ -551,63 +551,63 @@ cp icon/crowhead.svg /usr/share/icons/blackharrier/crowhead.svg
 
 # update sound settings
 XMLFILE="/usr/share/glib-2.0/schemas/org.mate.sound.gschema.xml"
-cp -v ${XMLFILE} /tmp/schematemp1.xml
+cp ${XMLFILE} /tmp/schematemp1.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="event-sounds"]/default/text()' -v false /tmp/schematemp1.xml > /tmp/schematemp2.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="theme-name"]/default/text()' -v "'__no_sounds'" /tmp/schematemp2.xml > /tmp/schematemp3.xml
 xmlstarlet val /tmp/schematemp3.xml || exit 1
-cp -v /tmp/schematemp3.xml ${XMLFILE}
+cp /tmp/schematemp3.xml ${XMLFILE}
 # cleanup
 rm /tmp/schematemp*.xml
 # update background settings
 XMLFILE="/usr/share/glib-2.0/schemas/org.mate.background.gschema.xml"
-cp -v ${XMLFILE} /tmp/schematemp1.xml
+cp ${XMLFILE} /tmp/schematemp1.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="picture-filename"]/default/text()' -v "'/usr/share/backgrounds/Black_Harrier.png'" /tmp/schematemp1.xml > /tmp/schematemp2.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="picture-options"]/default/text()' -v "'zoom'" /tmp/schematemp2.xml > /tmp/schematemp3.xml
 # validate or die
 xmlstarlet val /tmp/schematemp3.xml || exit 1
 # replace original file
-cp -v /tmp/schematemp3.xml ${XMLFILE}
+cp /tmp/schematemp3.xml ${XMLFILE}
 # cleanup
 rm /tmp/schematemp*.xml
 
 # update media handling
 XMLFILE="/usr/share/glib-2.0/schemas/org.mate.media-handling.gschema.xml"
-cp -v ${XMLFILE} /tmp/schematemp1.xml
+cp ${XMLFILE} /tmp/schematemp1.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="automount"]/default/text()' -v false /tmp/schematemp1.xml > /tmp/schematemp2.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="automount-open"]/default/text()' -v false /tmp/schematemp2.xml > /tmp/schematemp3.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="autorun-never"]/default/text()' -v true /tmp/schematemp3.xml > /tmp/schematemp4.xml
 # validate or die
 xmlstarlet val /tmp/schematemp4.xml || exit 1
 # replace original file
-cp -v /tmp/schematemp4.xml ${XMLFILE}
+cp /tmp/schematemp4.xml ${XMLFILE}
 # cleanup
 rm /tmp/schematemp*.xml
 
 # update power settings
 XMLFILE="/usr/share/glib-2.0/schemas/org.mate.power-manager.gschema.xml"
-cp -v ${XMLFILE} /tmp/schematemp1.xml
+cp ${XMLFILE} /tmp/schematemp1.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="sleep-display-ac"]/default/text()' -v 0 /tmp/schematemp1.xml > /tmp/schematemp2.xml
 # validate or die
 xmlstarlet val /tmp/schematemp2.xml || exit 1
 # replace original file
-cp -v /tmp/schematemp2.xml ${XMLFILE}
+cp /tmp/schematemp2.xml ${XMLFILE}
 # cleanup
 rm /tmp/schematemp*.xml
 
 # show monitors in panel
 XMLFILE="/usr/share/glib-2.0/schemas/org.mate.SettingsDaemon.plugins.xrandr.gschema.xml"
-cp -v ${XMLFILE} /tmp/schematemp1.xml
+cp ${XMLFILE} /tmp/schematemp1.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-notification-icon"]/default/text()' -v true /tmp/schematemp1.xml > /tmp/schematemp2.xml
 # validate or die
 xmlstarlet val /tmp/schematemp2.xml || exit 1
 # replace original file
-cp -v /tmp/schematemp2.xml ${XMLFILE}
+cp /tmp/schematemp2.xml ${XMLFILE}
 # cleanup
 rm /tmp/schematemp*.xml
 
 # menu settings
 XMLFILE="/usr/share/glib-2.0/schemas/com.linuxmint.mintmenu.gschema.xml"
-cp -v ${XMLFILE} /tmp/schematemp1.xml
+cp ${XMLFILE} /tmp/schematemp1.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="enable-internet-search"]/default/text()' -v false /tmp/schematemp1.xml > /tmp/schematemp2.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-package-manager"]/default/text()' -v true /tmp/schematemp2.xml > /tmp/schematemp3.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-terminal"]/default/text()' -v true /tmp/schematemp3.xml > /tmp/schematemp4.xml
@@ -615,13 +615,13 @@ xmlstarlet ed -N _=urn:local:xml -u '//key[@name="applet-icon"]/default/text()' 
 # validate or die
 xmlstarlet val /tmp/schematemp5.xml || exit 1
 # replace original file
-cp -v /tmp/schematemp5.xml ${XMLFILE}
+cp /tmp/schematemp5.xml ${XMLFILE}
 # cleanup
 rm /tmp/schematemp*.xml
 
 # file manager settings
 XMLFILE="/usr/share/glib-2.0/schemas/org.mate.caja.gschema.xml"
-cp -v ${XMLFILE} /tmp/schematemp1.xml
+cp ${XMLFILE} /tmp/schematemp1.xml
 # disable idle activation
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="default-folder-viewer"]/default/text()' -v "'list-view'" /tmp/schematemp1.xml > /tmp/schematemp2.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-hidden-files"]/default/text()' -v true /tmp/schematemp2.xml > /tmp/schematemp3.xml
@@ -630,31 +630,31 @@ xmlstarlet ed -N _=urn:local:xml -u '//key[@name="home-icon-visible"]/default/te
 # validate or die
 xmlstarlet val /tmp/schematemp5.xml || exit 1
 # replace original file
-cp -v /tmp/schematemp5.xml ${XMLFILE}
+cp /tmp/schematemp5.xml ${XMLFILE}
 # cleanup
 rm /tmp/schematemp*.xml
 
 # clock preferences
 XMLFILE="/usr/share/glib-2.0/schemas/org.mate.panel.applet.clock.gschema.xml"
-cp -v ${XMLFILE} /tmp/schematemp1.xml
+cp ${XMLFILE} /tmp/schematemp1.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="format"]/default/text()' -v "'24-hour'" /tmp/schematemp1.xml > /tmp/schematemp2.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-seconds"]/default/text()' -v true /tmp/schematemp2.xml > /tmp/schematemp3.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="show-date"]/default/text()' -v true /tmp/schematemp3.xml > /tmp/schematemp4.xml
 # validate or die
 xmlstarlet val /tmp/schematemp4.xml || exit 1
 # replace original file
-cp -v /tmp/schematemp4.xml ${XMLFILE}
+cp /tmp/schematemp4.xml ${XMLFILE}
 # cleanup
 rm /tmp/schematemp*.xml
 
 # thematic tweaks - pointer
 XMLFILE="/usr/share/glib-2.0/schemas/org.mate.peripherals-mouse.gschema.xml"
-cp -v ${XMLFILE} /tmp/schematemp1.xml
+cp ${XMLFILE} /tmp/schematemp1.xml
 xmlstarlet ed -N _=urn:local:xml -u '//key[@name="cursor-theme"]/default/text()' -v "'Adwaita'" /tmp/schematemp1.xml > /tmp/schematemp2.xml
 # validate or die
 xmlstarlet val /tmp/schematemp2.xml || exit 1
 # replace original file
-cp -v /tmp/schematemp2.xml ${XMLFILE}
+cp /tmp/schematemp2.xml ${XMLFILE}
 # cleanup
 rm /tmp/schematemp*.xml
 
@@ -770,14 +770,20 @@ chmod +x /usr/local/sbin/bhreplicate
 cp script/bhupdate.sh /usr/local/sbin/bhupdate
 chmod +x /usr/local/sbin/bhupdate
 
-# delete all user passwords if we are in portable mode - leave alone for workstation
+# delete all user passwords and sensitive backups if we are in portable mode - leave alone for workstation
 if [ ${SETUPMODE} == "portable" ]; then
 	sed -i 's/:$[^:]*:/:*:/g' /etc/shadow
 	# delete backup shadow file
 	rm -f /etc/shadow-
+  rm -f /etc/gshadow-
+  rm -f /etc/subgid-
+  rm -f /etc/passwd-
+  rm -f /etc/group-
+  rm -f /etc/subuid-
 fi
 
 # a few final cleanups
+rm -f /etc/.resolv.conf.systemd-resolved.bak
 rm -rf /root/.wget-hsts
 truncate -s 0 /home/${MAINUSER}/.bash_history
 rm -rf /home/${MAINUSER}/.xsession-errors*
