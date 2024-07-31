@@ -917,11 +917,11 @@ fi
 #echo "update-initramfs -u" >> ${ROOTMOUNT}/tmp/BHGrubinstall
 # and fix the dns resolution issue - why does this get lost?
 
+echo "mount -a" >> ${ROOTMOUNT}/tmp/BHGrubinstall
 echo "update-initramfs -d -k all" >> ${ROOTMOUNT}/tmp/BHGrubinstall
 echo "update-initramfs -c -k all" >> ${ROOTMOUNT}/tmp/BHGrubinstall
 echo "update-grub" >> ${ROOTMOUNT}/tmp/BHGrubinstall
 echo "grub-install --compress=xz --uefi-secure-boot -s ${DEVICE}" >> ${ROOTMOUNT}/tmp/BHGrubinstall
-# add exit
 
 # cleanup old LVM entries
 find ${ROOTMOUNT}/etc/lvm/ -type f ! -iname "*BH11.${UNIQUE}*" -delete
@@ -966,6 +966,7 @@ truncate -s 0 -c ./var/wtmp
 find ./var/log/ -type f -iname '*log.[0-9]*' -delete
 find ./var/log/ -type f -iname '*log.[0-9]*.gz' -delete
 find ./var/log/ -type f -iname '*log.old' -delete
+rm -rf /var/tmp/*
 
 echo Generating new host keys...
 ssh-keygen -q -t dsa -f ./etc/ssh/ssh_host_dsa_key -N '' -C root@BlackHarrier11
