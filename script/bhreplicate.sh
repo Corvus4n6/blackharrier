@@ -709,6 +709,9 @@ else
 	exit 1
 fi
 
+# force a sync of filesystem data to flush cached UUIDs that have resulted in spurious replication errors where findmnt data is cached
+# alternative solutions / checks possible via blkid or lsblk
+sync
 
 if [[ ${MODE} == "EFI" && "$ENCRYPT" == "true" ]]; then
   # get the UUID of the new root partition
@@ -800,7 +803,7 @@ fi
 # change the location of the swapfile - if it is a separate partition
 #sed -i -e 's/^UUID.*swap.*$/\/swapfile\tnone\tswap\tsw\t0\t0/' /media${DEVICE}2/etc/fstab
 
-# write a completely new fstab for this flash drive
+# write a completely new fstab for this destination drive
 echo "UUID=${NEWROOTUUID} / ext4 errors=remount-ro 0 1" > ${ROOTMOUNT}/etc/fstab
 
 if [[ "${HIBERFIL}" == "true" ]]; then
