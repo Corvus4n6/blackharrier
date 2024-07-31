@@ -969,6 +969,7 @@ truncate -s 0 -c ./var/wtmp
 find ./var/log/ -type f -iname '*log.[0-9]*' -delete
 find ./var/log/ -type f -iname '*log.[0-9]*.gz' -delete
 find ./var/log/ -type f -iname '*log.old' -delete
+rm -rf ./var/tmp/*
 
 echo Generating new host keys...
 ssh-keygen -q -t dsa -f ./etc/ssh/ssh_host_dsa_key -N '' -C root@BlackHarrier11
