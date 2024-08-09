@@ -770,6 +770,10 @@ chmod +x /usr/local/sbin/bhreplicate
 cp script/bhupdate.sh /usr/local/sbin/bhupdate
 chmod +x /usr/local/sbin/bhupdate
 
+# download the OTG script and drop it in the root sbin
+cp script/bhotg.sh /usr/local/sbin/bhotg
+chmod +x /usr/local/sbin/bhotg
+
 # delete all user passwords and sensitive backups if we are in portable mode - leave alone for workstation
 if [ ${SETUPMODE} == "portable" ]; then
 	sed -i 's/:$[^:]*:/:*:/g' /etc/shadow
