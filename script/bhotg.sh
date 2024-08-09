@@ -26,7 +26,7 @@ while (( "$#" )); do
         # display help and exit
         echo "NAME
       bhotg - Black Harrier Off The Grid / On The Go - Download copies of
-      software repositories to the local disk.
+      software repositories to the local disk to install packages when offline.
 
 SYNOPSIS
       bhotg [options]
@@ -80,7 +80,7 @@ if [[ "$SETUP" == "true" ]]; then
 
 fi
 
-# make destinations - or make sure they exist 
+# make destinations - or make sure they exist
 mkdir -v /opt/apt/mint -p
 mkdir -v /opt/apt/ubuntu -p
 
