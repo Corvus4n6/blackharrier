@@ -22,3 +22,5 @@ wget -O /usr/local/sbin/bhreplicate https://github.com/Corvus4n6/blackharrier/ra
 chmod +x /usr/local/sbin/bhreplicate
 wget -O /usr/local/sbin/bhupdate https://github.com/Corvus4n6/blackharrier/raw/master/script/bhupdate.sh
 chmod +x /usr/local/sbin/bhupdate
+wget -O /usr/local/sbin/bhotg https://github.com/Corvus4n6/blackharrier/raw/master/script/bhotg.sh
+chmod +x /usr/local/sbin/bhotg
