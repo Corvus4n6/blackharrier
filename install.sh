@@ -432,6 +432,20 @@ python3 setup.py build
 python3 setup.py install
 cd ${CWD}
 
+# install lightgrep
+CWD=`pwd`
+# make sure dependencies are in
+apt install build-essential libboost-all-dev catch2 libasio-dev bison pkgconf 
+git clone --recursive https://github.com/strozfriedberg/lightgrep.git
+cd lightgrep
+autoreconf -fi
+# compile statis until we figure out the weird library linking error
+./configure CXX="g++ -std=c++17 -static"
+make -j4
+make install
+cd ${CWD}
+rm -rf lightgrep
+
 # cleanup
 rm -rf /root/.cache/*
 
