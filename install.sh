@@ -150,7 +150,7 @@ apt install -y debconf debconf-utils
 debconf-set-selections config/debconf.txt
 
 # XML is the *worst* format
-apt install xmlstarlet
+apt install -y xmlstarlet
 
 if [ ${SETUPMODE} == "portable" ]; then
 
@@ -435,7 +435,7 @@ cd ${CWD}
 # install lightgrep
 CWD=`pwd`
 # make sure dependencies are in
-apt install build-essential libboost-all-dev catch2 libasio-dev bison pkgconf 
+apt install -y build-essential libboost-all-dev catch2 libasio-dev bison pkgconf
 git clone --recursive https://github.com/strozfriedberg/lightgrep.git
 cd lightgrep
 autoreconf -fi
