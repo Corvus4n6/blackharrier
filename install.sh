@@ -417,7 +417,7 @@ rm -rf /tmp/VeraCrypt
 apt install -y python3-full python3-dev libpython3-dev python3-pip python3-setuptools python3-wheel pipx
 apt install -y python3-distorm3 python3-yara python3-pycryptodome python3-pil python3-openpyxl python3-ujson python3-pytzdata python3-ipython python3-capstone
 apt install -y python3-pefile
-PIPX_HOME=/opt/pipx/ PIPX_BIN_DIR=/usr/local/bin/ PIPX_MAN_DIR=/usrlocal/share/man/ pipx install volatility3
+PIPX_HOME=/opt/pipx/ PIPX_BIN_DIR=/usr/local/bin/ PIPX_MAN_DIR=/usr/local/share/man/ pipx install volatility3
 SYMBOLSPATH=`find /opt/pipx/ -type d -name symbols | grep -v framework`
 wget -O /tmp/windows.zip https://downloads.volatilityfoundation.org/volatility3/symbols/windows.zip
 unzip /tmp/windows.zip -d ${SYMBOLSPATH}
