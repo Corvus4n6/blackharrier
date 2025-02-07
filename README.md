@@ -18,7 +18,7 @@ Note: There is **no** software write-block installed. You can modify or destroy 
 
 ## Installation
 
-Start with a base installation of Linux Mint, 64-bit with Mate-Desktop, (confirmed to work with release 22, aka Wilma), and apply all updates. After rebooting, open a terminal window, and type or copy/paste:
+Start with a base installation of Linux Mint, 64-bit with Mate-Desktop, (confirmed to work with release 22.1, aka Xie), and apply all updates. After rebooting, open a terminal window, and type or copy/paste:
 
 ```yaml
 sudo apt -y install git
