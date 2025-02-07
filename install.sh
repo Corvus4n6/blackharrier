@@ -1,7 +1,6 @@
 #!/bin/bash
 
 #TODO list
-# Add pdfrip https://github.com/mufeedvh/pdfrip
 
 # die on error - add -x under dev to monitor the script
 set -e
@@ -465,6 +464,17 @@ rm -fv /tmp/setup-repos.sh
 
 # restrict webmin to localhost
 echo "bind=127.0.0.1" >> /etc/webmin/miniserv.conf
+
+# install pdfrip for fast PDF cracking
+CWD=`pwd`
+apt install cargo
+cd /tmp
+git clone https://github.com/mufeedvh/pdfrip.git
+cd pdfrip/
+cargo build --release
+cp target/release/pdfrip /usr/local/bin/
+cd ${CWD}
+rm -rf /tmp/pdfrip
 
 # disable network services from auto-starting
 systemctl disable isc-dhcp-server
