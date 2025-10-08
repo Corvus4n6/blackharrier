@@ -2,7 +2,7 @@
 
 ## Description
 
-This latest iteration of a Linux distro that has taken many forms over the past 17+ years, [Black Harrier Linux](https://blackharrier.net) was developed to be a digital Jack-of-all-trades, initially focusing on IT support and system administration, later transitioning to supporting forensics / incident response (DFIR) and related technical analysis.
+This latest iteration of a Linux distro that has taken many forms over the past 18+ years, [Black Harrier Linux](https://blackharrier.net) was developed to be a digital Jack-of-all-trades, initially focusing on IT support and system administration, later transitioning to supporting forensics / incident response (DFIR) and related technical analysis.
 
 Based on [Linux Mint](https://linuxmint.com/) 64-bit MATE-Desktop, Black Harrier is designed to be a handy live OS that you can keep on your key fob for ad-hoc use or install on the hardware of your choice to make a Linux desktop analysis machine. Features include:
 
@@ -18,7 +18,7 @@ Note: There is **no** software write-block installed. You can modify or destroy 
 
 ## Installation
 
-Start with a base installation of Linux Mint, 64-bit with Mate-Desktop, (confirmed to work with release 22.1, aka Xie), and apply all updates. After rebooting, open a terminal window, and type or copy/paste:
+Start with a base installation of Linux Mint, 64-bit with Mate-Desktop, (confirmed to work with release 22.2, aka Zara), auto-login enabled, and apply all updates. After rebooting, open a terminal window, and type or copy/paste:
 
 ```yaml
 sudo apt -y install git
