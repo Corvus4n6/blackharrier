@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#TODO list
-
 # die on error - add -x under dev to monitor the script
 set -e
 
@@ -111,7 +109,6 @@ wget --spider -nv https://github.com/simsong/bulk_extractor.git
 wget --spider -nv https://packages.sits.lu/foss/debian/packages.sits.lu.list
 wget --spider -nv https://packages.sits.lu/foss/debian/packages-sits-lu.gpg
 wget --spider -nv http://www.webmin.com/download/deb/webmin-current.deb
-wget --spider -nv https://github.com/neutrinolabs/xrdp/releases/download/v0.10.0/xrdp-0.10.0.tar.gz
 wget --spider -nv https://downloads.volatilityfoundation.org/volatility3/symbols/windows.zip
 wget --spider -nv https://downloads.volatilityfoundation.org/volatility3/symbols/mac.zip
 wget --spider -nv https://downloads.volatilityfoundation.org/volatility3/symbols/linux.zip
@@ -222,7 +219,8 @@ PKGLIST+="linux-headers-generic "
 PKGLIST+="vinagre "
 
 # installing broadcom wifi drivers for some older macs
-PKGLIST+="b43-fwcutter firmware-b43-installer "
+# Removed 20251005 - Broadcom download location was 404
+#PKGLIST+="b43-fwcutter firmware-b43-installer "
 
 # adding support for Windows Volume Shadows with vshadowinfo and vshadowmount
 PKGLIST+="build-essential debhelper fakeroot autotools-dev libfuse-dev python3-all-dev "
@@ -288,6 +286,9 @@ PKGLIST+="wireguard wireguard-tools "
 # crudini for editing ini-type files via script
 PKGLIST+="crudini "
 
+# jq to help us find the latest github release and other tricks
+PKGLIST+="jq "
+
 # Install all the things
 apt install -y ${PKGLIST}
 
@@ -297,27 +298,28 @@ apt update
 apt install -y ffmpeg obs-studio
 
 # XRDP installation from github
-# dependencies
+# dependencies?
 apt install -y git autoconf libtool pkg-config gcc g++ make libssl-dev \
 libpam0g-dev libjpeg-dev libx11-dev libxfixes-dev libxrandr-dev flex bison \
 libxml2-dev intltool xsltproc xutils-dev python3-libxml2 xutils libfuse-dev \
-libmp3lame-dev nasm libpixman-1-dev xserver-xorg-dev
+libmp3lame-dev nasm libpixman-1-dev xserver-xorg-dev libfuse3-dev
 
-wget -O /tmp/xrdp-0.10.0.tar.gz https://github.com/neutrinolabs/xrdp/releases/download/v0.10.0/xrdp-0.10.0.tar.gz
-tar zxvf /tmp/xrdp-0.10.0.tar.gz
-rm -f /tmp/xrdp-0.10.0.tar.gz
-cd xrdp-0.10.0
-#git clone --recursive https://github.com/neutrinolabs/xrdp.git
-#cd xrdp
-# cheap hack to fix a bug from libtoolize
-#ln -s ../ltmain.sh ltmain.sh
+# find and download the latest from https://github.com/neutrinolabs/xrdp.git
+CWD=`pwd`
+cd /tmp
+git clone https://github.com/neutrinolabs/xrdp.git
+cd /tmp/xrdp
+./scripts/install_xrdp_build_dependencies_with_apt.sh max
 ./bootstrap
-./configure --enable-fuse --enable-mp3lame --enable-pixman
+./configure --with-systemdsystemunitdir=/usr/lib/systemd/system \
+    --enable-ibus --enable-ipv6 --enable-jpeg --enable-fuse --enable-mp3lame \
+    --enable-fdkaac --enable-opus --enable-rfxcodec --enable-painter \
+    --enable-pixman --enable-utmp -with-imlib2 --with-freetype2 \
+    --enable-tests --enable-x264 --enable-openh264 --enable-vsock
 make -j$(nproc)
 make install
-cd ..
-rm -rf xrdp*
-#rm -rf ltmain.sh
+cd ${CWD}
+rm -rf /tmp/xrdp
 ln -s /usr/local/sbin/xrdp{,-sesman} /usr/sbin
 # Note: for headless server installations or multi-desktop installations,you can set the default desktop instance for a login with:
 # sudo update-alternatives --config x-session-manager
@@ -361,21 +363,23 @@ rm -rf libforensic1394
 
 # bulk_extractor - shoehorn style
 # this works on 20.04LTS for bulk_extractor 2.0.1 release!
+CWD=`pwd`
+cd /tmp
 git clone --recursive https://github.com/simsong/bulk_extractor.git
-cd bulk_extractor
+cd /tmp/bulk_extractor
 # removing user interactivity
 sed -i '/read IGNORE/d' etc/CONFIGURE_UBUNTU20LTS.bash
 # delete all libwef lines since we have a newer and faster one installed
 sed -i '/libewf/Id' etc/CONFIGURE_UBUNTU20LTS.bash
-set +e # expecting errors - but that's fine
+set +e # expecting errors - but that's fine here
 bash etc/CONFIGURE_UBUNTU20LTS.bash
 set -e # back to normal
 ./bootstrap.sh
 ./configure
 make -j$(nproc)
-sudo make install
-cd ..
-rm -rf bulk_extractor
+make install
+rm -rf /tmp/bulk_extractor
+cd ${CWD}
 
 # BEViewer - extracted from windows releases since it's just a java app
 # https://digitalcorpora.s3.amazonaws.com/downloads/bulk_extractor/bulk_extractor-windows-2.0.1.zip - just the processor - viewer not included
@@ -387,31 +391,14 @@ cp bin/BEViewer.jar /usr/local/bin/
 echo "AvoidEncaseProblems = on" >> /etc/guymager/local.cfg
 
 # turn down the swappiness - only swap if we hit 95 percent
-# assuming will probably run on external in most cases
+# assuming will probably run on external USB in most cases
 echo "vm.swappiness=5" >> /etc/sysctl.conf
 
-# veracrypt - forced to compile for 1.26.12 for now.
-# BORKEN on LinuxMint 22 Wilma - veracrypt depends libwxgtk3.0-gtk3-0v5 but it is not installable as a deb package
-# find the latest URL - TODO - find and pull from main site
-###wget -O /tmp/veracrypt.deb https://github.com/veracrypt/VeraCrypt/releases/download/VeraCrypt_1.26.7/veracrypt-1.26.7-Ubuntu-22.04-amd64.deb
-###apt install -y /tmp/veracrypt.deb
-###rm /tmp/veracrypt.deb
-# have to compile from source
-apt install -y build-essential yasm pkg-config libfuse-dev git libpcsclite-dev libgtk2.0-dev libcppunit-dev libopengl-dev freeglut3-dev
-wget -O /tmp/wxWidgets-3.0.5.1.tar.bz2 https://github.com/wxWidgets/wxWidgets/releases/download/v3.0.5.1/wxWidgets-3.0.5.1.tar.bz2
-CWD=`pwd`
-cd /tmp/
-tar -j -x -v -f /tmp/wxWidgets-3.0.5.1.tar.bz2
-rm -f /tmp/wxWidgets-3.0.5.1.tar.bz2
-git clone https://github.com/veracrypt/VeraCrypt.git
-cd /tmp/VeraCrypt/src
-make -j$(nproc) WXSTATIC=1 WX_ROOT=/tmp/wxWidgets-3.0.5.1 wxbuild
-make -j$(nproc) WXSTATIC=1
-make install
-# cleanup
-cd ${CWD}
-rm -rf /tmp/wxWidgets-3.0.5.1
-rm -rf /tmp/VeraCrypt
+# Install Veracrypt
+# find and download the latest gui release for this platform
+wget -q -O - "https://api.github.com/repos/veracrypt/VeraCrypt/releases/latest" | jq '.assets[] | select ( .name | match ("veracrypt-[0-9].*Ubuntu-24.04-amd64.deb$") ) | .browser_download_url' | xargs -L 1 wget -q -O /tmp/veracrypt.deb
+apt install -f /tmp/veracrypt.deb
+rm -rf /tmp/veracrypt.deb
 
 # install volatility3
 apt install -y python3-full python3-dev libpython3-dev python3-pip python3-setuptools python3-wheel pipx
@@ -433,15 +420,20 @@ rm /tmp/linux.zip
 CWD=`pwd`
 # make sure dependencies are in
 apt install -y build-essential libboost-all-dev catch2 libasio-dev bison pkgconf
-git clone --recursive https://github.com/strozfriedberg/lightgrep.git
-cd lightgrep
-autoreconf -fi
-# compile statis until we figure out the weird library linking error
-./configure CXX="g++ -std=c++17 -static"
-make -j4
+# https://github.com/strozfriedberg/lightgrep.git
+# find and download the latest release
+wget -q -O - "https://api.github.com/repos/strozfriedberg/lightgrep/releases/latest" | jq -r '.tarball_url' | xargs -L 1 wget -q -O /tmp/lightgrep.tar.gz
+mkdir -p /tmp/lightgrep
+tar -zxvf /tmp/lightgrep.tar.gz -C /tmp/lightgrep --strip-components=1
+rm /tmp/lightgrep.tar.gz
+cd /tmp/lightgrep
+./bootstrap.sh
+./configure
+make -j$(nproc)
 make install
+ldconfig
 cd ${CWD}
-rm -rf lightgrep
+rm -rf /tmp/lightgrep
 
 # cleanup
 rm -rf /root/.cache/*
@@ -451,30 +443,23 @@ rm -rf /root/.cache/*
 service ssh stop
 update-rc.d ssh disable
 
-# removed tools install in the public version - sorry
-
 # install webmin
-wget --no-check-certificate -O /tmp/setup-repos.sh https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
-# fix for automation
-sed -i 's/read -r sslyn/sslyn="y"/' /tmp/setup-repos.sh
-sh /tmp/setup-repos.sh
-apt-get -y install webmin --install-recommends
+wget --no-check-certificate -O /tmp/webmin-setup-repo.sh https://raw.githubusercontent.com/webmin/webmin/refs/heads/master/webmin-setup-repo.sh
+# patch for unattended install
+sed -i 's/read -r sslyn/sslyn="y"/' /tmp/webmin-setup-repo.sh
+sh /tmp/webmin-setup-repo.sh
+apt install -y webmin --install-recommends
 rm -fv /webmin-setup.out
-rm -fv /tmp/setup-repos.sh
+rm -fv /tmp/webmin-setup-repo.sh
 
 # restrict webmin to localhost
 echo "bind=127.0.0.1" >> /etc/webmin/miniserv.conf
 
-# install pdfrip for fast PDF cracking
-CWD=`pwd`
-apt install cargo
-cd /tmp
-git clone https://github.com/mufeedvh/pdfrip.git
-cd pdfrip/
-cargo build --release
-cp target/release/pdfrip /usr/local/bin/
-cd ${CWD}
-rm -rf /tmp/pdfrip
+# install pdfrip for fast PDF cracking - download latest release binary to prevent build issues - grepping amd64 version
+
+wget -q -O - "https://api.github.com/repos/mufeedvh/pdfrip/releases/latest" | jq '.assets[] | select ( .name | match ("pdfrip_amd64") ) | .browser_download_url ' | xargs -L 1 wget -q -O /tmp/pdfrip
+chmod +x /tmp/pdfrip
+mv -v /tmp/pdfrip /usr/local/bin
 
 # disable network services from auto-starting
 systemctl disable isc-dhcp-server
@@ -488,8 +473,8 @@ systemctl disable xrdp-sesman
 # TODO quicklaunch toggles and docs
 
 # download xrdp config and logo and replace default
-# TODO update and modify ini file
 cp config/xrdp.ini /etc/xrdp/xrdp.ini
+cp config/sesman.ini /etc/xrdp/sesman.ini
 mkdir -p /usr/local/share/blackharrier/
 cp images/BH_logo.bmp /usr/local/share/blackharrier/logo.bmp
 chown 666 /usr/local/share/blackharrier/logo.bmp
@@ -553,7 +538,7 @@ cp images/animation/*.png /usr/share/plymouth/themes/mint-logo/
 
 # get rid of the resume reference pointing to the swap partition
 truncate -s 0 /etc/initramfs-tools/conf.d/resume
-# get rid of the swap partition - if it exists
+# get rid of the swap partition to save space - if it exists
 swapoff -a
 rm -rf /swapfile
 # /swapfile none swap sw 0 0
