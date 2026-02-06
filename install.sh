@@ -55,9 +55,9 @@ apt autoremove -y
 # stripping out old kernels and saving space
 LATESTKERN=`uname -r | grep -o -E '[0-9][0-9\.\-]+[0-9]'`
 echo Latest kernel version is: ${LATESTKERN}
-OLDKERNLIST=`dpkg --list | awk '{print $2}' - | grep 'linux-image-' | grep -v ${LATESTKERN} | grep -o -E '[0-9][0-9\.\-]+[0-9]' | sort -u | tr '\n' '|' | sed s/\|$//`
+OLDKERNLIST=`dpkg --list | awk '{print $2}' - | grep 'linux-image-' | grep -v ${LATESTKERN} | grep -v '\-hwe\-' | grep -o -E '[0-9][0-9\.\-]+[0-9]' | sort -u | tr '\n' '|' | sed s/\|$//`
 if [ ${OLDKERNLIST} ]; then
-    REMOVELIST=`dpkg --list | awk '{print $2}' - | grep -E "${OLDKERNLIST}" | tr '\n' ' '`
+    REMOVELIST=`dpkg --list | awk '{print $2}' - | grep -E "${OLDKERNLIST}" | grep -v '\-hwe\-' | tr '\n' ' '`
     echo "Found the following old kernel bits:"
     echo ${REMOVELIST} | tr ' ' '\n' | column
     # Removing the ask
@@ -213,7 +213,9 @@ PKGLIST+="firefox ecryptfs-utils libreoffice-base libreoffice-calc libreoffice-c
 
 PKGLIST+="array-info "
 
-PKGLIST+="linux-headers-generic "
+# specify linux-headers-generic-x.y version to prevent older version selection
+KVER=`uname -r | grep -o -E "^[0-9]+\.[0-9]+"`
+PKGLIST+="linux-headers-generic-${KVER} "
 
 # vinagre installer - perfomred better than remmina
 PKGLIST+="vinagre "
