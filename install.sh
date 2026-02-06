@@ -106,7 +106,7 @@ fi
 echo "Checking all dependency URLs ..."
 wget --spider -nv https://github.com/FreddieWitherden/libforensic1394.git
 wget --spider -nv https://github.com/simsong/bulk_extractor.git
-wget --spider -nv https://packages.sits.lu/foss/debian/packages.sits.lu.list
+wget --spider -nv https://packages.sits.lu/foss/debian/packages.sits.lu.deb11.list
 wget --spider -nv https://packages.sits.lu/foss/debian/packages-sits-lu.gpg
 wget --spider -nv http://www.webmin.com/download/deb/webmin-current.deb
 wget --spider -nv https://downloads.volatilityfoundation.org/volatility3/symbols/windows.zip
@@ -121,7 +121,7 @@ ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 echo UTC > /etc/timezone
 
 # https://www.pinguin.lu/
-wget -nH -P /etc/apt/sources.list.d/ https://packages.sits.lu/foss/debian/packages.sits.lu.list
+wget -nH -P /etc/apt/sources.list.d/ https://packages.sits.lu/foss/debian/packages.sits.lu.deb11.list
 wget -nH -P /usr/share/keyrings/ https://packages.sits.lu/foss/debian/packages-sits-lu.gpg
 
 apt update
