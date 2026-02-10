@@ -437,6 +437,11 @@ ldconfig
 cd ${CWD}
 rm -rf /tmp/lightgrep
 
+# install wiper
+# https://github.com/Corvus4n6/wiper
+cp bin/wiper /usr/local/sbin/
+chmod +x /usr/local/sbin/wiper
+
 # cleanup
 rm -rf /root/.cache/*
 
