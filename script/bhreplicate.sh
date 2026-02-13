@@ -255,7 +255,9 @@ if [[ ${MODE} == "EFI" ]]; then
     if [[ "${ENCRYPT}" == "true" ]]; then
       # separate boot partition for encrypted setups
       # TODO under set -e this will cause it to die if no /boot mount
+      set +e
       BOOTUUID=`findmnt -M /boot -n -o UUID`
+      set -e
     fi
     EFIUUID=`findmnt -M /boot/efi -n -o UUID`
 
