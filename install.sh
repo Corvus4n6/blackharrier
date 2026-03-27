@@ -398,9 +398,15 @@ echo "vm.swappiness=5" >> /etc/sysctl.conf
 
 # Install Veracrypt
 # find and download the latest gui release for this platform
-wget -q -O - "https://api.github.com/repos/veracrypt/VeraCrypt/releases/latest" | jq '.assets[] | select ( .name | match ("veracrypt-[0-9].*Ubuntu-24.04-amd64.deb$") ) | .browser_download_url' | xargs -L 1 wget -q -O /tmp/veracrypt.deb
+VERACRYPT_RELEASE=$(wget -q -O - "https://api.github.com/repos/veracrypt/VeraCrypt/releases/latest")
+VERACRYPT_DEB_URL=$(echo "${VERACRYPT_RELEASE}" | jq -r '.assets[] | select(.name | match("veracrypt-[0-9].*Ubuntu-24.04-amd64.deb$")) | .browser_download_url')
+VERACRYPT_SHA_URL=$(echo "${VERACRYPT_RELEASE}" | jq -r '.assets[] | select(.name | match("veracrypt.*sha256sum\\.txt$")) | .browser_download_url')
+VERACRYPT_DEB_NAME=$(basename "${VERACRYPT_DEB_URL}")
+wget -q -O /tmp/veracrypt.deb "${VERACRYPT_DEB_URL}"
+wget -q -O /tmp/veracrypt.sha256 "${VERACRYPT_SHA_URL}"
+grep "${VERACRYPT_DEB_NAME}" /tmp/veracrypt.sha256 | sha256sum --check --status || { echo "ERROR: VeraCrypt checksum verification failed. Aborting." >&2; rm -f /tmp/veracrypt.deb /tmp/veracrypt.sha256; exit 1; }
 apt install -f /tmp/veracrypt.deb
-rm -rf /tmp/veracrypt.deb
+rm -f /tmp/veracrypt.deb /tmp/veracrypt.sha256
 
 # install volatility3
 apt install -y python3-full python3-dev libpython3-dev python3-pip python3-setuptools python3-wheel pipx
@@ -451,7 +457,7 @@ service ssh stop
 update-rc.d ssh disable
 
 # install webmin
-wget --no-check-certificate -O /tmp/webmin-setup-repo.sh https://raw.githubusercontent.com/webmin/webmin/refs/heads/master/webmin-setup-repo.sh
+wget -O /tmp/webmin-setup-repo.sh https://raw.githubusercontent.com/webmin/webmin/refs/heads/master/webmin-setup-repo.sh
 # patch for unattended install
 sed -i 's/read -r sslyn/sslyn="y"/' /tmp/webmin-setup-repo.sh
 sh /tmp/webmin-setup-repo.sh
@@ -504,7 +510,6 @@ do
     DEVICEUUID=`blkid -s UUID -o value ${DEVICE}`
     # escape the paths
     echo "${DEVICE//\//\\\/} ==> ${DEVICEUUID}"
-    echo sed -i "s/${DEVICE//\//\\\/}/UUID=${DEVICEUUID}/i" /etc/fstab
     sed -i "s/${DEVICE//\//\\\/}/UUID=${DEVICEUUID}/i" /etc/fstab
 done
 

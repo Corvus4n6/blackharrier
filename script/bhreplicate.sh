@@ -41,14 +41,16 @@ set -e
 ENCRYPT="false"
 
 load_check() {
-    LOAD=`cat /proc/loadavg | awk '{print $1}'`
     LOADMAX=`lscpu | grep -E "^CPU\(s\):" | awk '{print $2}'`
     #LOADMAX=1
-    if [[ $(echo "${LOAD} < ${LOADMAX}"|bc) -eq 0 ]] ; then
+    while true; do
+        LOAD=`cat /proc/loadavg | awk '{print $1}'`
+        if [[ $(echo "${LOAD} < ${LOADMAX}"|bc) -eq 1 ]] ; then
+            break
+        fi
         echo "System load is at $LOAD. Enhancing calm..."
         sleep 60
-        load_check
-    fi
+    done
 }
 
 dectobase36(){
@@ -765,6 +767,12 @@ printf "/dev/*\n/proc/*\n/sys/*\n/tmp/*\n/run/*\n/mnt/*\n/media/*\n/lost+found
 echo "Replicating data to new filesystems..."
 # TODO - write a better way to do this
 rsync -aAXH --no-i-r --links --ignore-missing-args --info=progress2 --exclude-from=/dev/shm/rsyncexclude.tmp /* ${ROOTMOUNT}
+RSYNC_EXIT=$?
+# exit code 24 = "some files vanished" (benign race condition during live copy)
+if [[ ${RSYNC_EXIT} -ne 0 ]] && [[ ${RSYNC_EXIT} -ne 24 ]]; then
+    echo "ERROR: rsync replication failed with exit code ${RSYNC_EXIT}. Aborting." >&2
+    exit 1
+fi
 
 # quick folder fix that causes apt to fail when missing
 mkdir -p ${ROOTMOUNT}/var/cache/apt-show-versions
@@ -860,8 +868,8 @@ fi
 #sed -i "s/${BOOTUUID}/${NEWBOOTUUID}/" /media${DEVICE}2/etc/fstab
 # change the location of the root parition UUID in the grub config files
 sed -i "s/${ROOTUUID}/${NEWROOTUUID}/g" ${ROOTMOUNT}/boot/grub/grub.cfg
-sed -i "s/$BOOTUUID}/${NEWBOOTUUID}/g" ${ROOTMOUNT}/boot/grub/grub.cfg
-sed -i "s/$EFIUUID}/${NEWEFIUUID}/g" ${ROOTMOUNT}/boot/grub/grub.cfg
+sed -i "s/${BOOTUUID}/${NEWBOOTUUID}/g" ${ROOTMOUNT}/boot/grub/grub.cfg
+sed -i "s/${EFIUUID}/${NEWEFIUUID}/g" ${ROOTMOUNT}/boot/grub/grub.cfg
 
 # disanable os-prober to prevent build os from getting added to the menu
 # already disabled in source os build
