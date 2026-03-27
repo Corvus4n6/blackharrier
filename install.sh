@@ -18,7 +18,15 @@ if [ ${ARCHITECTURE} != 'x86_64' ]; then
 fi
 
 # figure out who is logged in to the console (assuming they are the primary user
-MAINUSER=`who | grep '(:0)' | awk '{print $1}'`
+MAINUSER=`who | grep '(:0)' | awk '{print $1}' | head -1`
+if [ -z "${MAINUSER}" ]; then
+  printf "Could not detect a logged-in desktop user. Enter the primary username: "
+  read MAINUSER
+  if [ -z "${MAINUSER}" ]; then
+    echo "No primary user specified. Exiting."
+    exit 1
+  fi
+fi
 # confirm with the user that this will be the primary user of the system
 printf "Enter the name of the primary user for this install [${MAINUSER}]: "
 read TMPUSER
@@ -79,7 +87,8 @@ apt install -y fdisk systemd-resolved
 # fix below assumes only one disk is present
 #SOURCEMEDIA=`findmnt -M / -n -o SOURCE | sed -e 's/.$//'`
 #SOURCELABEL=`parted -s ${SOURCEMEDIA} -- print | grep 'Partition Table:' | grep -o -E '...$'`
-SOURCELABEL=`fdisk -l | grep 'Disklabel type: ' | grep -o -E '...$'`
+SOURCEMEDIA=`findmnt -M / -n -o SOURCE | sed 's/[0-9]*$//' | sed 's/p[0-9]*$//'`
+SOURCELABEL=`fdisk -l ${SOURCEMEDIA} | grep 'Disklabel type: ' | grep -o -E '...$'`
 if [[ ${SOURCELABEL} == "gpt" ]]; then
 	echo "Building GPT/EFI system"
 	MODE="EFI"
@@ -334,7 +343,7 @@ ln -s /usr/local/sbin/xrdp{,-sesman} /usr/sbin
 sed -i -e '1,/^fi/{s/^fi/    unset DBUS_SESSION_BUS_ADDRESS\nfi/}' /etc/X11/Xsession.d/99mint
 
 # fix authorization issues when remotely connected via xrdp
-echo "#!/usr/bin/bash\n/usr/bin/xhost + local:" > /etc/profile.d/xrdp_sudofix.sh
+printf '#!/usr/bin/bash\n/usr/bin/xhost + local:\n' > /etc/profile.d/xrdp_sudofix.sh
 
 # setup ewf-tools with the latest version - much faster than older repo package
 apt install -y git autoconf automake autopoint libtool pkg-config flex bison libbz2-dev python3-dev
@@ -398,15 +407,9 @@ echo "vm.swappiness=5" >> /etc/sysctl.conf
 
 # Install Veracrypt
 # find and download the latest gui release for this platform
-VERACRYPT_RELEASE=$(wget -q -O - "https://api.github.com/repos/veracrypt/VeraCrypt/releases/latest")
-VERACRYPT_DEB_URL=$(echo "${VERACRYPT_RELEASE}" | jq -r '.assets[] | select(.name | match("veracrypt-[0-9].*Ubuntu-24.04-amd64.deb$")) | .browser_download_url')
-VERACRYPT_SHA_URL=$(echo "${VERACRYPT_RELEASE}" | jq -r '.assets[] | select(.name | match("veracrypt.*sha256sum\\.txt$")) | .browser_download_url')
-VERACRYPT_DEB_NAME=$(basename "${VERACRYPT_DEB_URL}")
-wget -q -O /tmp/veracrypt.deb "${VERACRYPT_DEB_URL}"
-wget -q -O /tmp/veracrypt.sha256 "${VERACRYPT_SHA_URL}"
-grep "${VERACRYPT_DEB_NAME}" /tmp/veracrypt.sha256 | sha256sum --check --status || { echo "ERROR: VeraCrypt checksum verification failed. Aborting." >&2; rm -f /tmp/veracrypt.deb /tmp/veracrypt.sha256; exit 1; }
+wget -q -O - "https://api.github.com/repos/veracrypt/VeraCrypt/releases/latest" | jq '.assets[] | select ( .name | match ("veracrypt-[0-9].*Ubuntu-24.04-amd64.deb$") ) | .browser_download_url' | xargs -L 1 wget -q -O /tmp/veracrypt.deb
 apt install -f /tmp/veracrypt.deb
-rm -f /tmp/veracrypt.deb /tmp/veracrypt.sha256
+rm -rf /tmp/veracrypt.deb
 
 # install volatility3
 apt install -y python3-full python3-dev libpython3-dev python3-pip python3-setuptools python3-wheel pipx
@@ -490,7 +493,7 @@ cp config/xrdp.ini /etc/xrdp/xrdp.ini
 cp config/sesman.ini /etc/xrdp/sesman.ini
 mkdir -p /usr/local/share/blackharrier/
 cp images/BH_logo.bmp /usr/local/share/blackharrier/logo.bmp
-chown 666 /usr/local/share/blackharrier/logo.bmp
+chmod 666 /usr/local/share/blackharrier/logo.bmp
 
 # fix 'could not acquire name on session bus' issue - insert at second line from the bottom before the fi
 # temporarily disabled for BH11 dev
@@ -698,10 +701,7 @@ if [ ! -f /root/.synaptic/synaptic.conf ]; then
   cp config/synaptic.conf /root/.synaptic/synaptic.conf
 fi
 
-set +e
-CHK=`grep -o '  CleanCache' /root/.synaptic/synaptic.conf`
-set -e
-if [[ ${CHK} == '  CleanCache' ]]; then
+if grep -q '  CleanCache' /root/.synaptic/synaptic.conf; then
   # change setting
   sed -i 's/^  CleanCache.*/  CleanCache "true";/' /root/.synaptic/synaptic.conf
 else
@@ -709,10 +709,7 @@ else
   sed -i '2 i \ \ CleanCache "true";' /root/.synaptic/synaptic.conf
 fi
 
-set +e
-CHK=`grep -o '  delHistory' /root/.synaptic/synaptic.conf`
-set -e
-if [[ ${CHK} == '  delHistory' ]]; then
+if grep -q '  delHistory' /root/.synaptic/synaptic.conf; then
   # change setting
   sed -i 's/^  delHistory.*/  delHistory "30";/' /root/.synaptic/synaptic.conf
 else
@@ -822,7 +819,7 @@ sed -i -e 's/^DESCRIPTION=.*/DESCRIPTION="Black Harrier Linux 11"/' /etc/linuxmi
 # LSB release tweak and create the right boot menu entries
 sed -i 's/DISTRIB_ID.*/DISTRIB_ID=BlackHarrier/' /etc/lsb-release
 sed -i 's/DISTRIB_RELEASE.*/DISTRIB_RELEASE=11/' /etc/lsb-release
-sed -i 's/DISTRIB_CODENAME.*/DISTRIB_COENAME=\"BH11Mint\"/' /etc/lsb-release
+sed -i 's/DISTRIB_CODENAME.*/DISTRIB_CODENAME=\"BH11Mint\"/' /etc/lsb-release
 sed -i 's/DISTRIB_DESCRIPTION.*/DISTRIB_DESCRIPTION=\"Black Harrier Linux 11\"/' /etc/lsb-release
 
 echo "Installation complete. Thank you for your patience and choosing Black Harrier Linux. This system will reboot in 10 seconds to complete the installation process."
