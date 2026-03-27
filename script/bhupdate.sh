@@ -15,12 +15,19 @@ apt-get -y autoremove
 apt-get clean
 
 # update the BH11 Scripts
-# TODO - add checks to scripts and sources
-wget -O /usr/local/sbin/bhpwdchk https://github.com/Corvus4n6/blackharrier/raw/master/script/bhpwdchk.sh
-chmod +x /usr/local/sbin/bhpwdchk
-wget -O /usr/local/sbin/bhreplicate https://github.com/Corvus4n6/blackharrier/raw/master/script/bhreplicate.sh
-chmod +x /usr/local/sbin/bhreplicate
-wget -O /usr/local/sbin/bhupdate https://github.com/Corvus4n6/blackharrier/raw/master/script/bhupdate.sh
-chmod +x /usr/local/sbin/bhupdate
-wget -O /usr/local/sbin/bhotg https://github.com/Corvus4n6/blackharrier/raw/master/script/bhotg.sh
-chmod +x /usr/local/sbin/bhotg
+# Downloads each script to a staging directory first, then installs atomically
+# so a failed or partial download never overwrites an installed file.
+BHRAW="https://github.com/Corvus4n6/blackharrier/raw/master/script"
+BHTMP=$(mktemp -d)
+trap 'rm -rf "${BHTMP}"' EXIT
+
+wget -O "${BHTMP}/bhpwdchk"    "${BHRAW}/bhpwdchk.sh"    || { echo "ERROR: Failed to download bhpwdchk." >&2;    exit 1; }
+wget -O "${BHTMP}/bhreplicate" "${BHRAW}/bhreplicate.sh" || { echo "ERROR: Failed to download bhreplicate." >&2; exit 1; }
+wget -O "${BHTMP}/bhupdate"    "${BHRAW}/bhupdate.sh"    || { echo "ERROR: Failed to download bhupdate." >&2;    exit 1; }
+wget -O "${BHTMP}/bhotg"       "${BHRAW}/bhotg.sh"       || { echo "ERROR: Failed to download bhotg." >&2;       exit 1; }
+
+# all downloads succeeded - install atomically
+for SCRIPT in bhpwdchk bhreplicate bhupdate bhotg; do
+    mv "${BHTMP}/${SCRIPT}" "/usr/local/sbin/${SCRIPT}"
+    chmod +x "/usr/local/sbin/${SCRIPT}"
+done
