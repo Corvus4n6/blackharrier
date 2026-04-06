@@ -220,6 +220,12 @@ else
 	exit 1
 fi
 
+# check that the target mount point is not already in use from a previous interrupted run
+if mountpoint -q /media${DEVICE}2 2>/dev/null; then
+    echo "ERROR: /media${DEVICE}2 is already mounted. A previous replication may not have cleaned up. Unmount it first and re-run." >&2
+    exit 1
+fi
+
 # determine what kind of system (UEFI/BIOS) this is and react accordingly
 # TODO - allow user override via switch
 # TODO - network package building switch
@@ -787,19 +793,23 @@ rm /dev/shm/rsyncexclude.tmp
 if [[ "${NEWUSER}" == "true" ]]; then
 	CURRUSER=`who | grep ':0' | awk '{print $1}'`
 	CURRDISP=`grep ${CURRUSER} /etc/passwd | awk -F ":" '{ print $5 }' | sed -e s/,.*//`
+	# escape any sed regex metacharacters in usernames/display names before substitution
+	CURRUSER_ESC=${CURRUSER//./\\.}
+	NEWUSERNAME_ESC=${NEWUSERNAME//./\\.}
+	CURRDISP_ESC=$(printf '%s' "${CURRDISP}" | sed 's/[[\.*^$()+?{|]/\\&/g')
+	NEWUSERDISP_ESC=$(printf '%s' "${NEWUSERDISP}" | sed 's/[[\.*^$()+?{|]/\\&/g')
 	# modify destination with NEWUSERNAME and NEWUSERDISP on the offline system
-	# also currently dangerous if we are not careful about the sed work
 	mv ${ROOTMOUNT}/home/${CURRUSER} ${ROOTMOUNT}/home/${NEWUSERNAME}
-	sed -i "s/autologin\-user=${CURRUSER}/autologin\-user=${NEWUSERNAME}/" ${ROOTMOUNT}/etc/lightdm/lightdm.conf
-	sed -i "s/^${CURRUSER}:/${NEWUSERNAME}:/" ${ROOTMOUNT}/etc/shadow
-	sed -i "s/^${CURRUSER}:/${NEWUSERNAME}:/" ${ROOTMOUNT}/etc/subgid
-	sed -i "s/${CURRUSER}/${NEWUSERNAME}/g" ${ROOTMOUNT}/etc/group
-	sed -i "s/${CURRUSER}/${NEWUSERNAME}/g" ${ROOTMOUNT}/etc/gshadow
-	sed -i "s/^${CURRUSER} /${NEWUSERNAME} /" ${ROOTMOUNT}/etc/sudoers
-	sed -i "s/^${CURRUSER}:/${NEWUSERNAME}:/" ${ROOTMOUNT}/etc/passwd
-	sed -i "s/\/home\/${CURRUSER}:/\/home\/${NEWUSERNAME}:/" ${ROOTMOUNT}/etc/passwd
-	sed -i "s/:${CURRDISP},/:${NEWUSERDISP},/" ${ROOTMOUNT}/etc/passwd
-	sed -i "s/${CURRUSER}:/${NEWUSERNAME}:/" ${ROOTMOUNT}/etc/subuid
+	sed -i "s/autologin\-user=${CURRUSER_ESC}/autologin\-user=${NEWUSERNAME_ESC}/" ${ROOTMOUNT}/etc/lightdm/lightdm.conf
+	sed -i "s/^${CURRUSER_ESC}:/${NEWUSERNAME_ESC}:/" ${ROOTMOUNT}/etc/shadow
+	sed -i "s/^${CURRUSER_ESC}:/${NEWUSERNAME_ESC}:/" ${ROOTMOUNT}/etc/subgid
+	sed -i "s/${CURRUSER_ESC}/${NEWUSERNAME_ESC}/g" ${ROOTMOUNT}/etc/group
+	sed -i "s/${CURRUSER_ESC}/${NEWUSERNAME_ESC}/g" ${ROOTMOUNT}/etc/gshadow
+	sed -i "s/^${CURRUSER_ESC} /${NEWUSERNAME_ESC} /" ${ROOTMOUNT}/etc/sudoers
+	sed -i "s/^${CURRUSER_ESC}:/${NEWUSERNAME_ESC}:/" ${ROOTMOUNT}/etc/passwd
+	sed -i "s/\/home\/${CURRUSER_ESC}:/\/home\/${NEWUSERNAME_ESC}:/" ${ROOTMOUNT}/etc/passwd
+	sed -i "s/:${CURRDISP_ESC},/:${NEWUSERDISP_ESC},/" ${ROOTMOUNT}/etc/passwd
+	sed -i "s/${CURRUSER_ESC}:/${NEWUSERNAME_ESC}:/" ${ROOTMOUNT}/etc/subuid
 
 	# I think this needs to happen in the chroot
 	#sudo -u ${NEWUSERNAME} -H dbus-launch dconf write /org/blueman/transfer/shared-path "'/home/${NEWUSERNAME}/Downloads'"
